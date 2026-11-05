@@ -117,6 +117,7 @@ class TankLedger
                 'idempotency_key' => $idempotencyKey,
                 'vessel_discharge_id' => $original->vessel_discharge_id,
                 'delivery_order_id' => $original->delivery_order_id,
+                'truck_visit_id' => $original->truck_visit_id,
                 'reverses_movement_id' => $original->id,
             ]);
 

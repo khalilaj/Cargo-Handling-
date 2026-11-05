@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget;
 
 class RecentMovements extends TableWidget
 {
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 7;
 
     protected static ?string $heading = 'Latest movements';
 

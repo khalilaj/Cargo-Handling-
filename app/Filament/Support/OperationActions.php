@@ -3,14 +3,17 @@
 namespace App\Filament\Support;
 
 use App\Domain\Cargo\Exceptions\CargoException;
+use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\AdvanceOrderStatus;
 use App\Domain\Operations\Actions\RecordDischargeIntoTank;
 use App\Domain\Operations\Actions\RecordTruckLoad;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
+use App\Models\Berth;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
+use App\Models\TruckVisit;
 use App\Models\VesselDischarge;
 use Closure;
 use Filament\Actions\Action;
@@ -40,7 +43,26 @@ class OperationActions
                 )),
         ];
 
-        foreach ([DischargeStatus::Berthed, DischargeStatus::Discharging, DischargeStatus::Completed, DischargeStatus::Cancelled] as $to) {
+        // Berthing needs a berth: only free, in-service berths are offered.
+        $actions[] = Action::make('to_berthed')
+            ->label(DischargeStatus::Berthed->actionLabel())
+            ->color('gray')
+            ->modalHeading('Assign a berth')
+            ->visible(fn (VesselDischarge $record) => $record->status->canTransitionTo(DischargeStatus::Berthed))
+            ->schema(fn (VesselDischarge $record) => [
+                Forms\Components\Select::make('berth_id')->label('Berth')->required()
+                    ->options(fn () => Berth::where('active', true)->orderBy('code')->get()
+                        ->filter(fn (Berth $b) => ($o = $b->occupant()) === null || $o->id === $record->id)
+                        ->mapWithKeys(fn (Berth $b) => [$b->id => "{$b->code} · {$b->name}"]))
+                    ->default($record->berth_id)
+                    ->helperText('Only free berths are listed (Registers → Berths).'),
+            ])
+            ->action(fn (array $data, VesselDischarge $record) => self::run(
+                fn () => app(AdvanceDischargeStatus::class)($record, DischargeStatus::Berthed, Berth::findOrFail($data['berth_id'])),
+                'Discharge is now Berthed',
+            ));
+
+        foreach ([DischargeStatus::Discharging, DischargeStatus::Completed, DischargeStatus::Cancelled] as $to) {
             $actions[] = Action::make('to_'.$to->value)
                 ->label($to->actionLabel())
                 ->color($to === DischargeStatus::Cancelled ? 'danger' : 'gray')
@@ -64,13 +86,17 @@ class OperationActions
                 ->modalHeading('Load a truck from a tank')
                 ->visible(fn (DeliveryOrder $record) => $record->status->isActive())
                 ->schema(fn (DeliveryOrder $record) => [
+                    Forms\Components\Select::make('visit_id')->label('Truck in the loading bay')->required()
+                        ->options(fn () => $record->visits()->where('status', VisitStatus::Loading->value)->with('truck')->get()
+                            ->mapWithKeys(fn (TruckVisit $v) => [$v->id => sprintf('%s · %s (%s%s kg loaded)', $v->ref, $v->truck->plate,
+                                number_format($v->loadedKg()), $v->truck->capacity_kg ? ' of '.number_format($v->truck->capacity_kg) : '')]))
+                        ->helperText('Gate the truck in and start loading first (Operations → Truck visits).'),
                     ...self::movementForm($record->commodity, $record->remainingKg(), 'order'),
-                    Forms\Components\TextInput::make('truck')->label('Truck plate')->maxLength(20),
                 ])
                 ->action(fn (array $data, DeliveryOrder $record) => self::run(
                     fn () => app(RecordTruckLoad::class)(
                         $record, (int) $data['tank_id'], (int) $data['quantity_kg'],
-                        Carbon::parse($data['occurred_at']), $data['idempotency_key'], $data['truck'] ?? null,
+                        Carbon::parse($data['occurred_at']), $data['idempotency_key'], null, TruckVisit::findOrFail($data['visit_id']),
                     ),
                     'Truck loaded',
                 )),

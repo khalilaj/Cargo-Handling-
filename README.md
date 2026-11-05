@@ -23,6 +23,10 @@ php artisan test
 
 - **Operations → Corrections:** the ledger is immutable, so a mistake is fixed by a **reversal movement**. An operator requests it (with a reason), and a *different* supervisor approves (four-eyes rule). The reversal mirrors the original exactly, restores the tank, the bill of lading / order balance and the transit-loss figure, and can be applied only once. If the tank could not legally take it back (for example the cargo has since been delivered), nothing changes and the request stays open.
 - **Administration → Audit log:** an append-only record of who changed what (before/after values, role, time, IP). Passwords are never logged; the fact that one changed is.
+- **Registers:** vessels (with IMO number), berths, customers, transporters, trucks and drivers, each with create / view / edit and **deactivate** (never delete, because history refers to them). Voyages and orders are scheduled by *picking from the register*, so a ship or customer is one record, not text typed differently each time. Trucks and drivers carry document expiry dates (insurance, inspection, licence).
+- **Tracking vessels:** a voyage can only be berthed at a **free, in-service berth**, and a ship cannot be alongside twice. The dashboard shows *Vessels in port* (berth, progress against the bill of lading), and each vessel's page says where it is right now and lists all its voyages.
+- **Operations → Truck visits:** a truck's journey on site: `arrived → weighed in → loading → weighed out → departed` (or cancelled before loading). Cargo is booked out of a tank **against the visit**, so every load names the truck, driver and order. Rules: one open visit per truck and per driver; a load cannot exceed the truck's **payload**; an order cannot be closed while a truck is still on site for it; the weighbridge net is compared with the ledger and differences are flagged.
+- **Documents warn, they never block:** expired, expiring (30 days) or unrecorded truck/driver documents are recorded on the visit, shown at the gate and on the dashboard, and the truck is still admitted (a deliberate policy decision).
 - **Reports → Terminal reports:** stock position per product for any period (opening, discharged, transit loss, delivered, closing, with a "reconciles" check against the ledger), vessel reconciliation (bill of lading vs received) and delivery fulfilment. Each exports to **CSV** (spreadsheet formulas are neutralised) and all three to one **PDF**.
 - **Administration → Users & roles** (admin only).
 
@@ -49,6 +53,8 @@ Demo logins (all share `ADMIN_PASSWORD`): `admin@cargo.test`, `supervisor@cargo.
 | **0.5% transit loss** | `TransitLossCalculator` | Applied to inbound vessel flows only, in integer kg (half-up). Stored per movement (`gross_kg`, `loss_kg`, `net_kg`) so it is auditable. |
 | **Out-of-order logs** | `TankLedger::replay`, `IngestMovements` | The ledger is append-only. A tank's balance is *always* recomputed by replaying every movement sorted by `occurred_at`, so arrival order is irrelevant. A late record that would make the timeline impossible (negative stock / overflow at any point) is rejected. |
 | **Atomic operations** | `TankLedger::record` | One DB transaction with a `SELECT … FOR UPDATE` row lock on the tank, plus a unique `idempotency_key` so duplicates/retries apply once. |
+
+Several guarantees are enforced **by the database itself**, not only by application code: a UNIQUE column holds a truck's id only while its visit is open (one open visit per truck), and the same technique guards "one ship per berth, one berth per ship". Each is also checked with row locks in the application for clear error messages.
 
 A correction is protected by four independent layers: the request row is locked, the tank row is locked, the ledger refuses a second reversal, and the reversal has a fixed idempotency key on a unique column, so a double reversal is impossible even if the application layers were removed.
 
@@ -77,13 +83,17 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 89 pass, 5 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
-- Real concurrency on Postgres (20 parallel processes each): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, and two supervisors approving the same correction at once:
+- `php artisan test` — 159 pass, 8 concurrency tests skipped on SQLite (it cannot lock rows). On PostgreSQL all **167 pass** with nothing skipped. Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- Real concurrency on Postgres (parallel processes; the CI job runs these too): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, two supervisors approving the same correction at once, twelve gates admitting one truck, loads racing for one truck's payload, and two ships racing for one berth:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \
     php artisan test --filter Concurrency
   ```
   Verified by negative control: with each row lock removed the matching test fails (11 pumps fit a 10-pump bill of lading; 8 loads fit a 6-load order).
+
+## Upgrading an existing database
+
+The migrations are additive. Voyages and orders created before the registers existed keep working: a backfill builds a vessel / customer register entry from each typed name (the same ship typed two ways becomes one entry) and links the records. Ships already alongside are marked in the guard columns. The seeder is idempotent and enriches those entries (IMO numbers, contacts) without duplicating them.
 
 ## Continuous integration
 

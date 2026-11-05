@@ -7,6 +7,7 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\OrderStatus;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
@@ -14,13 +15,32 @@ class DeliveryOrder extends Model
 {
     use Auditable;
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $o) {
+            if ($o->customer_id && ($o->isDirty('customer_id') || blank($o->customer))) {
+                $o->customer = Customer::find($o->customer_id)?->name ?? $o->customer;
+            }
+        });
+    }
+
+    public function customerRecord(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function visits(): HasMany
+    {
+        return $this->hasMany(TruckVisit::class);
+    }
+
     public function auditLabel(): string
     {
         return "Delivery order {$this->order_ref}";
     }
 
     protected $fillable = [
-        'order_ref', 'customer', 'commodity', 'ordered_kg', 'status',
+        'order_ref', 'customer_id', 'customer', 'commodity', 'ordered_kg', 'status',
         'scheduled_at', 'started_at', 'completed_at',
     ];
 

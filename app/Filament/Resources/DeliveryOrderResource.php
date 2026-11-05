@@ -7,6 +7,7 @@ use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Support\OperationActions;
+use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
@@ -41,7 +42,9 @@ class DeliveryOrderResource extends Resource
     {
         return $schema->components([
             Forms\Components\TextInput::make('order_ref')->label('Order reference')->required()->unique(ignoreRecord: true)->maxLength(40),
-            Forms\Components\TextInput::make('customer')->required()->maxLength(120),
+            Forms\Components\Select::make('customer_id')->label('Customer')->required()->searchable()
+                ->options(fn () => Customer::where('active', true)->orderBy('name')->pluck('name', 'id'))
+                ->helperText('Pick from the customer register (Registers → Customers).'),
             Forms\Components\Select::make('commodity')->required()
                 ->options(collect(Commodity::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])),
             Forms\Components\TextInput::make('ordered_kg')->label('Ordered quantity (kg)')

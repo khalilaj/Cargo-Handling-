@@ -16,6 +16,7 @@ use App\Domain\Operations\Exceptions\InvalidStatusTransitionException;
 use App\Domain\Operations\Exceptions\OperationIncompleteException;
 use App\Domain\Operations\Exceptions\OperationNotActiveException;
 use App\Domain\Operations\Exceptions\OrderQuantityExceededException;
+use App\Models\Berth;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
@@ -66,7 +67,7 @@ class OperationsTest extends TestCase
         $d = $this->discharge(s: DischargeStatus::Scheduled);
         $advance = app(AdvanceDischargeStatus::class);
 
-        $d = $advance($d, DischargeStatus::Berthed);
+        $d = $advance($d, DischargeStatus::Berthed, Berth::create(['code' => 'B1', 'name' => 'Berth 1']));
         $this->assertNotNull($d->berthed_at);
         $d = $advance($d, DischargeStatus::Discharging);
         $this->assertNotNull($d->started_at);

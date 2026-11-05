@@ -7,6 +7,7 @@ use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\VesselDischargeResource\Pages;
 use App\Filament\Support\OperationActions;
+use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
@@ -41,7 +42,9 @@ class VesselDischargeResource extends Resource
     {
         return $schema->components([
             Forms\Components\TextInput::make('voyage_ref')->label('Voyage reference')->required()->unique(ignoreRecord: true)->maxLength(40),
-            Forms\Components\TextInput::make('vessel_name')->required()->maxLength(80),
+            Forms\Components\Select::make('vessel_id')->label('Vessel')->required()->searchable()
+                ->options(fn () => Vessel::where('active', true)->orderBy('name')->get()->mapWithKeys(fn (Vessel $v) => [$v->id => $v->name.($v->imo ? " (IMO {$v->imo})" : '')]))
+                ->helperText('Pick from the vessel register (Registers → Vessels).'),
             Forms\Components\Select::make('commodity')->required()
                 ->options(collect(Commodity::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])),
             Forms\Components\TextInput::make('bl_quantity_kg')->label('Bill of lading quantity (kg)')
@@ -55,7 +58,9 @@ class VesselDischargeResource extends Resource
         return $schema->components([
             Section::make('Vessel')->columns(4)->schema([
                 TextEntry::make('voyage_ref')->label('Voyage'),
-                TextEntry::make('vessel_name')->label('Vessel'),
+                TextEntry::make('vessel_name')->label('Vessel')
+                    ->url(fn (VesselDischarge $record) => $record->vessel_id ? VesselResource::getUrl('view', ['record' => $record->vessel_id]) : null),
+                TextEntry::make('berth.code')->label('Berth')->placeholder('Not yet berthed'),
                 TextEntry::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
                 TextEntry::make('status')->badge()
                     ->formatStateUsing(fn (DischargeStatus $state) => $state->label())
@@ -89,6 +94,7 @@ class VesselDischargeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('voyage_ref')->label('Voyage')->searchable()->weight('bold'),
                 Tables\Columns\TextColumn::make('vessel_name')->label('Vessel')->searchable(),
+                Tables\Columns\TextColumn::make('berth.code')->label('Berth')->placeholder('—'),
                 Tables\Columns\TextColumn::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (DischargeStatus $state) => $state->label())

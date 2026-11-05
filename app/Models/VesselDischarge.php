@@ -7,6 +7,7 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\DischargeStatus;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
@@ -14,13 +15,40 @@ class VesselDischarge extends Model
 {
     use Auditable;
 
+    protected static function booted(): void
+    {
+        // The register is the source of truth; the name copy follows it.
+        static::saving(function (self $d) {
+            // Derived, never typed: the guard columns hold the ids only while the ship is alongside.
+            $alongside = in_array($d->status, [DischargeStatus::Berthed, DischargeStatus::Discharging], true);
+            $d->active_berth_id = $alongside ? $d->berth_id : null;
+            $d->active_vessel_id = $alongside ? $d->vessel_id : null;
+        });
+
+        static::saving(function (self $d) {
+            if ($d->vessel_id && ($d->isDirty('vessel_id') || blank($d->vessel_name))) {
+                $d->vessel_name = Vessel::find($d->vessel_id)?->name ?? $d->vessel_name;
+            }
+        });
+    }
+
+    public function vessel(): BelongsTo
+    {
+        return $this->belongsTo(Vessel::class);
+    }
+
+    public function berth(): BelongsTo
+    {
+        return $this->belongsTo(Berth::class);
+    }
+
     public function auditLabel(): string
     {
         return "Vessel discharge {$this->voyage_ref}";
     }
 
     protected $fillable = [
-        'voyage_ref', 'vessel_name', 'commodity', 'bl_quantity_kg', 'status',
+        'voyage_ref', 'vessel_id', 'berth_id', 'vessel_name', 'commodity', 'bl_quantity_kg', 'status',
         'eta', 'berthed_at', 'started_at', 'completed_at',
     ];
 
