@@ -22,7 +22,7 @@ class AdvanceDischargeStatus
                 );
             }
 
-            $hasCargo = $d->movements()->exists();
+            $hasCargo = $d->receivedGrossKg() > 0;   // net of any reversed movements
 
             if ($to === DischargeStatus::Completed && ! $hasCargo) {
                 throw new OperationIncompleteException(

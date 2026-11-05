@@ -27,8 +27,8 @@ class MovementsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('occurred_at')->label('When')->dateTime('d M Y H:i')->sortable(),
                 Tables\Columns\TextColumn::make('type')->badge()
-                    ->formatStateUsing(fn (MovementType $state) => $state->isInbound() ? 'Discharge' : 'Delivery')
-                    ->color(fn (MovementType $state) => $state->isInbound() ? 'info' : 'warning'),
+                    ->state(fn ($record) => $record->isReversal() ? 'Reversal' : ($record->type->isInbound() ? 'Discharge' : 'Delivery'))
+                    ->color(fn ($state) => match ($state) { 'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning' }),
                 Tables\Columns\TextColumn::make('tank.code')->label('Tank'),
                 Tables\Columns\TextColumn::make('reference')->label('Vessel / truck'),
                 Tables\Columns\TextColumn::make('gross_kg')->label('Gross (kg)')->numeric(),

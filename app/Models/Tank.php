@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Audit\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[\Illuminate\Database\Eloquent\Attributes\ObservedBy(\App\Observers\TankObserver::class)]
 class Tank extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'code', 'name', 'commodity', 'capacity_kg',
         'opening_volume_kg', 'current_volume_kg', 'requires_heating',
@@ -23,6 +26,17 @@ class Tank extends Model
             'current_volume_kg' => 'integer',
             'requires_heating' => 'boolean',
         ];
+    }
+
+    public function auditLabel(): string
+    {
+        return "Tank {$this->code}";
+    }
+
+    /** The balance is derived from the ledger; the movement itself is what gets audited. */
+    protected function auditExclude(): array
+    {
+        return ['current_volume_kg'];
     }
 
     public function movements(): HasMany

@@ -4,6 +4,8 @@ namespace App\Domain\Operations\Services;
 
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
+use App\Domain\Corrections\Enums\CorrectionStatus;
+use App\Models\CorrectionRequest;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
 use App\Models\VesselDischarge;
@@ -27,6 +29,7 @@ class OperationalAlerts
             ...$this->tankAlerts(),
             ...$this->vesselAlerts(),
             ...$this->orderAlerts(),
+            ...$this->correctionAlerts(),
         ])
             ->sortBy(fn ($a) => ['danger' => 0, 'warning' => 1, 'info' => 2][$a['level']])
             ->values()
@@ -72,6 +75,17 @@ class OperationalAlerts
         }
 
         return $out;
+    }
+
+    private function correctionAlerts(): array
+    {
+        $n = CorrectionRequest::where('status', CorrectionStatus::Pending->value)->count();
+
+        return $n === 0 ? [] : [[
+            'level' => 'warning',
+            'title' => "{$n} correction request" . ($n === 1 ? '' : 's') . ' awaiting approval',
+            'detail' => 'A supervisor must approve or reject them (Operations → Corrections).',
+        ]];
     }
 
     private function orderAlerts(): array

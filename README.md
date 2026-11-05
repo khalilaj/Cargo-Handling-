@@ -21,7 +21,24 @@ php artisan test
 - **Operations → Delivery orders:** `pending → loading → completed`. Loading is limited to the ordered quantity and to what the tank actually holds.
 - **Inventory → Tanks / Cargo movements:** per-tank page with a balance-history chart and its ledger lines. Movements stay an immutable ledger, each linked to the vessel or order that caused it.
 
+- **Operations → Corrections:** the ledger is immutable, so a mistake is fixed by a **reversal movement**. An operator requests it (with a reason), and a *different* supervisor approves (four-eyes rule). The reversal mirrors the original exactly, restores the tank, the bill of lading / order balance and the transit-loss figure, and can be applied only once. If the tank could not legally take it back (for example the cargo has since been delivered), nothing changes and the request stays open.
+- **Administration → Audit log:** an append-only record of who changed what (before/after values, role, time, IP). Passwords are never logged; the fact that one changed is.
+- **Administration → Users & roles** (admin only).
+
 Every status change and movement goes through a domain action; Filament only calls them and shows the result.
+
+### Roles
+
+| Role | Can do |
+| --- | --- |
+| **Admin** | everything, including users |
+| **Supervisor** | operate, schedule vessels / orders, edit tanks, approve or reject corrections, read the audit log |
+| **Operator** | operate (record movements, advance vessels and orders), *request* corrections |
+| **Auditor** | read-only everywhere, plus the audit log |
+
+Enforced in three places: Laravel policies (screens), action authorisation (buttons), and the domain actions themselves for approvals (role and four-eyes checks cannot be bypassed from another entry point). Operational data can never be deleted.
+
+Demo logins (all share `ADMIN_PASSWORD`): `admin@cargo.test`, `supervisor@cargo.test`, `operator@cargo.test`, `auditor@cargo.test`.
 
 ## How the four domain rules are met
 
@@ -31,6 +48,8 @@ Every status change and movement goes through a domain action; Filament only cal
 | **0.5% transit loss** | `TransitLossCalculator` | Applied to inbound vessel flows only, in integer kg (half-up). Stored per movement (`gross_kg`, `loss_kg`, `net_kg`) so it is auditable. |
 | **Out-of-order logs** | `TankLedger::replay`, `IngestMovements` | The ledger is append-only. A tank's balance is *always* recomputed by replaying every movement sorted by `occurred_at`, so arrival order is irrelevant. A late record that would make the timeline impossible (negative stock / overflow at any point) is rejected. |
 | **Atomic operations** | `TankLedger::record` | One DB transaction with a `SELECT … FOR UPDATE` row lock on the tank, plus a unique `idempotency_key` so duplicates/retries apply once. |
+
+A correction is protected by four independent layers: the request row is locked, the tank row is locked, the ledger refuses a second reversal, and the reversal has a fixed idempotency key on a unique column, so a double reversal is impossible even if the application layers were removed.
 
 Operations add a second lock level with a fixed order (**vessel/order row, then tank**) so concurrent flows can never deadlock, and the B/L / order caps are enforced under that lock.
 
@@ -57,8 +76,8 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 41 pass, 4 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
-- Real concurrency on Postgres (20 parallel processes each): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, and 12 duplicate submissions:
+- `php artisan test` — 76 pass, 5 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- Real concurrency on Postgres (20 parallel processes each): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, and two supervisors approving the same correction at once:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \
     php artisan test --filter Concurrency

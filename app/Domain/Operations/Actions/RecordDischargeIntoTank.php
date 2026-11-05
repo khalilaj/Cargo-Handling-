@@ -39,7 +39,7 @@ class RecordDischargeIntoTank
                 );
             }
 
-            $remaining = $d->bl_quantity_kg - (int) $d->movements()->sum('gross_kg');
+            $remaining = $d->bl_quantity_kg - $d->receivedGrossKg();
             if ($grossKg > $remaining) {
                 throw new BillOfLadingExceededException(sprintf(
                     '%s has only %s kg left on its bill of lading; %s kg requested.',

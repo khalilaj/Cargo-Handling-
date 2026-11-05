@@ -2,7 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Access\Role;
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Cargo\Enums\MovementType;
+use App\Domain\Cargo\Services\TankLedger;
+use App\Domain\Corrections\Actions\RequestCorrection;
+use App\Models\User;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\CargoMovement;
@@ -110,5 +115,31 @@ class ConcurrencyTest extends TestCase
         $this->assertSame(6, $applied, 'a 300,000 kg order admits exactly six 50,000 kg loads');
         $this->assertSame(300_000, (int) $o->movements()->sum('net_kg'));
         $this->assertSame(4_700_000, Tank::where('code', 'RACE-T4')->first()->current_volume_kg);
+    }
+
+    public function test_parallel_approvals_of_one_correction_apply_exactly_one_reversal(): void
+    {
+        $tank = Tank::create(['code' => 'RACE-T5', 'name' => 'Race', 'commodity' => Commodity::CPOL, 'capacity_kg' => 50_000_000,
+            'opening_volume_kg' => 1_000_000, 'current_volume_kg' => 1_000_000]);
+        $operator = User::factory()->role(Role::Operator)->create();
+        User::factory()->role(Role::Supervisor)->create(['email' => 'sup1@race.test']);
+        User::factory()->role(Role::Supervisor)->create(['email' => 'sup2@race.test']);
+
+        $movement = app(TankLedger::class)->record($tank->id, MovementType::TruckDelivery, 100_000, now()->subHour(), 'race-m');
+        $this->assertSame(900_000, $tank->fresh()->current_volume_kg);
+        $request = app(RequestCorrection::class)($movement, $operator, 'Loaded from the wrong tank by mistake.');
+
+        $procs = [];
+        for ($i = 0; $i < 12; $i++) {
+            $procs[] = new Process([PHP_BINARY, 'artisan', 'cargo:approve-correction', (string) $request->id,
+                $i % 2 ? 'sup1@race.test' : 'sup2@race.test'], base_path(), null, null, 60);
+        }
+        $this->runAll($procs);
+
+        $approved = collect($procs)->filter(fn ($p) => str_starts_with(trim($p->getOutput()), 'approved'))->count();
+
+        $this->assertSame(1, $approved, 'exactly one approver wins');
+        $this->assertSame(1, CargoMovement::whereNotNull('reverses_movement_id')->count(), 'exactly one reversal row');
+        $this->assertSame(1_000_000, $tank->fresh()->current_volume_kg, 'tank is back to its opening level, not credited twice');
     }
 }

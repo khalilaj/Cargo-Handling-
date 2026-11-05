@@ -2,18 +2,22 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Access\Role;
 use App\Domain\Cargo\Actions\RecordTruckDelivery;
 use App\Domain\Cargo\Actions\RecordVesselDischarge;
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Corrections\Actions\RequestCorrection;
 use App\Domain\Operations\Actions\RecordTruckLoad;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\CargoMovement;
+use App\Models\CorrectionRequest;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 
 /** Idempotent: safe to run on every boot, and to upgrade an older demo database in place. */
@@ -21,10 +25,22 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@cargo.test')],
-            ['name' => 'Terminal Operator', 'password' => env('ADMIN_PASSWORD', 'password')]
-        );
+        // One demo account per role; all share ADMIN_PASSWORD (change it in production).
+        foreach ([
+            ['admin', 'Terminal Admin', Role::Admin],
+            ['supervisor', 'Shift Supervisor', Role::Supervisor],
+            ['operator', 'Terminal Operator', Role::Operator],
+            ['auditor', 'Internal Auditor', Role::Auditor],
+        ] as [$handle, $name, $role]) {
+            $pw = env('ADMIN_PASSWORD', 'password');
+            $user = User::firstOrNew(['email' => $handle === 'admin' ? env('ADMIN_EMAIL', 'admin@cargo.test') : "{$handle}@cargo.test"]);
+            $user->name = $name;
+            $user->role = $role;
+            if (! $user->exists || ! Hash::check($pw, $user->password)) {   // only touch the password when it really changed
+                $user->password = $pw;
+            }
+            $user->save();
+        }
 
         foreach ([
             ['CPO-01', 'Crude Palm Oil 1', Commodity::CPO, 5_000_000],
@@ -40,6 +56,7 @@ class DatabaseSeeder extends Seeder
 
         $this->seedLedger();
         $this->seedOperations();
+        $this->seedCorrection();
     }
 
     private function seedLedger(): void
@@ -58,6 +75,25 @@ class DatabaseSeeder extends Seeder
         $in($id('PFAD-01'), 1_700_000, $d('2026-11-03 09:15'), 'seed-3', 'MV Borneo Trader');
         $out($id('CPO-01'), 350_000, $d('2026-11-03 08:00'), 'seed-4', 'KDA 214X');
         $out($id('CPOL-01'), 600_000, $d('2026-11-03 11:30'), 'seed-5', 'KCB 887L');
+    }
+
+    /** One open correction so the approvals queue has something to show (filed by the operator, as in real life). */
+    private function seedCorrection(): void
+    {
+        $operator = User::where('role', Role::Operator->value)->first();
+        $movement = CargoMovement::where('idempotency_key', 'seed-5')->first();
+
+        if (! $operator || ! $movement || CorrectionRequest::exists()) {
+            return;
+        }
+
+        auth()->setUser($operator);          // so the audit log names the operator, not "system"
+        try {
+            app(RequestCorrection::class)($movement, $operator,
+                'Weighbridge ticket shows 580,000 kg, not 600,000. I keyed the wrong figure.');
+        } finally {
+            auth()->forgetGuards();
+        }
     }
 
     /** Wraps the demo movements in vessel / order records, and adds a few open ones. */

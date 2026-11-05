@@ -35,7 +35,7 @@ class RecordTruckLoad
                 );
             }
 
-            $remaining = $o->ordered_kg - (int) $o->movements()->sum('net_kg');
+            $remaining = $o->ordered_kg - $o->deliveredKg();
             if ($kg > $remaining) {
                 throw new OrderQuantityExceededException(sprintf(
                     '%s has only %s kg left to deliver; %s kg requested.',

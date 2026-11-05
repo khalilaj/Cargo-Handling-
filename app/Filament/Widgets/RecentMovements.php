@@ -23,8 +23,8 @@ class RecentMovements extends TableWidget
             ->columns([
                 Tables\Columns\TextColumn::make('occurred_at')->label('When')->dateTime('d M H:i'),
                 Tables\Columns\TextColumn::make('type')->badge()
-                    ->formatStateUsing(fn (MovementType $state) => $state->isInbound() ? 'Discharge' : 'Delivery')
-                    ->color(fn (MovementType $state) => $state->isInbound() ? 'info' : 'warning'),
+                    ->state(fn ($record) => $record->isReversal() ? 'Reversal' : ($record->type->isInbound() ? 'Discharge' : 'Delivery'))
+                    ->color(fn ($state) => match ($state) { 'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning' }),
                 Tables\Columns\TextColumn::make('tank.code')->label('Tank'),
                 Tables\Columns\TextColumn::make('operation')->label('Operation')
                     ->state(fn (CargoMovement $m) => $m->vesselDischarge?->voyage_ref ?? $m->deliveryOrder?->order_ref ?? 'Ad hoc'),
