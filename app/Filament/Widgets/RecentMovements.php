@@ -9,7 +9,12 @@ use Filament\Widgets\TableWidget;
 
 class RecentMovements extends TableWidget
 {
-    protected static ?int $sort = 7;
+    public static function canView(): bool
+    {
+        return auth()->user()?->role->canViewAnalytics() ?? false;
+    }
+
+    protected static ?int $sort = 6;
 
     protected static ?string $heading = 'Latest movements';
 

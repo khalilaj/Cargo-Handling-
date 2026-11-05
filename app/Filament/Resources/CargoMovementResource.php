@@ -23,7 +23,7 @@ class CargoMovementResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Inventory';
+    protected static string|UnitEnum|null $navigationGroup = 'Stock';
 
     protected static ?int $navigationSort = 2;
 

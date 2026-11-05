@@ -52,7 +52,7 @@ class RegistersUiTest extends TestCase
         return $u;
     }
 
-    public function test_every_register_screen_loads_for_every_role(): void
+    public function test_registers_open_for_admins_and_supervisors_only(): void
     {
         $urls = ['/admin/vessels', '/admin/berths', '/admin/customers', '/admin/transporters', '/admin/trucks', '/admin/drivers'];
         $records = [
@@ -61,16 +61,19 @@ class RegistersUiTest extends TestCase
             '/admin/transporters/'.Transporter::first()->id,
         ];
 
-        foreach (Role::cases() as $role) {
+        foreach ([Role::Admin, Role::Supervisor] as $role) {
             $this->login($role);
             foreach ([...$urls, ...$records] as $url) {
                 $this->get($url)->assertOk();
+                $this->get($url.(preg_match('#/\d+$#', $url) ? '/edit' : '/create'))->assertOk();
             }
         }
 
-        $this->login(Role::Supervisor);
-        foreach ([...$urls, ...$records] as $url) {
-            $this->get($url.(str_contains($url, '/') && preg_match('#/\d+$#', $url) ? '/edit' : '/create'))->assertOk();
+        foreach ([Role::Operator, Role::Auditor] as $role) {
+            $this->login($role);
+            foreach ([...$urls, ...$records] as $url) {
+                $this->get($url)->assertForbidden();                       // hidden from the menu AND refused by direct URL
+            }
         }
     }
 
@@ -166,7 +169,7 @@ class RegistersUiTest extends TestCase
 
     public function test_a_vessel_page_tells_you_where_the_ship_is(): void
     {
-        $this->login(Role::Auditor);
+        $this->login(Role::Supervisor);
 
         Livewire::test(ViewVessel::class, ['record' => Vessel::where('name', 'MV Borneo Trader')->value('id')])
             ->assertSee('Discharging at berth B1')->assertSee('VOY-2611-03');
@@ -176,7 +179,7 @@ class RegistersUiTest extends TestCase
 
     public function test_the_truck_list_shows_document_warnings(): void
     {
-        $this->login(Role::Operator);
+        $this->login(Role::Supervisor);
 
         Livewire::test(ListTrucks::class)
             ->assertSee('KDA 214X')->assertSee('Expired')                       // insurance expired
@@ -211,13 +214,13 @@ class RegistersUiTest extends TestCase
         $this->assertTrue($ship->fresh()->active);
     }
 
-    public function test_read_only_roles_do_not_get_the_switch(): void
+    public function test_operators_and_auditors_do_not_get_the_register_screens_at_all(): void
     {
         $this->login(Role::Operator);
-        Livewire::test(ListVessels::class)->assertActionHidden(TestAction::make('toggle_active')->table(Vessel::first()));
+        Livewire::test(ListVessels::class)->assertForbidden();
 
         $this->login(Role::Auditor);
-        Livewire::test(ListTrucks::class)->assertActionHidden(TestAction::make('toggle_active')->table(Truck::first()));
+        Livewire::test(ListTrucks::class)->assertForbidden();
     }
 
     // ---- the berth picker on the voyage page -----------------------------------------------------------

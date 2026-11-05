@@ -14,6 +14,8 @@ class ReportPdfController
 {
     public function __invoke(Request $request): Response
     {
+        abort_unless($request->user()->role->canViewReports(), 403);
+
         [$from, $until] = self::period($request->query('from'), $request->query('until'));
 
         return Pdf::loadView('reports.pdf', [

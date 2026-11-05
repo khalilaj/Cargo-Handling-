@@ -8,9 +8,14 @@ use Filament\Widgets\ChartWidget;
 
 class InventoryTrend extends ChartWidget
 {
-    protected static ?int $sort = 3;
+    public static function canView(): bool
+    {
+        return auth()->user()?->role->canViewAnalytics() ?? false;
+    }
 
-    protected int|string|array $columnSpan = 1;
+    protected static ?int $sort = 5;
+
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $heading = 'Inventory, last 14 days';
 

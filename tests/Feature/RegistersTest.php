@@ -240,7 +240,9 @@ class RegistersTest extends TestCase
             $this->assertTrue($user(Role::Admin)->can('update', new $model), "admin update {$model}");
             $this->assertFalse($user(Role::Operator)->can('create', $model), "operator create {$model}");
             $this->assertFalse($user(Role::Auditor)->can('update', new $model), "auditor update {$model}");
-            $this->assertTrue($user(Role::Auditor)->can('viewAny', $model), "auditor view {$model}");
+            $this->assertTrue($user(Role::Supervisor)->can('viewAny', $model), "supervisor view {$model}");
+            $this->assertFalse($user(Role::Auditor)->can('viewAny', $model), "auditor view {$model}");      // registers are for the people who maintain them
+            $this->assertFalse($user(Role::Operator)->can('viewAny', $model), "operator view {$model}");
 
             foreach (Role::cases() as $r) {
                 $this->assertFalse($user($r)->can('delete', new $model), "{$r->value} delete {$model}");

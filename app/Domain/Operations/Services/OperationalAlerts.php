@@ -2,6 +2,7 @@
 
 namespace App\Domain\Operations\Services;
 
+use App\Domain\Access\Role;
 use App\Domain\Corrections\Enums\CorrectionStatus;
 use App\Domain\Fleet\Enums\DocumentStatus;
 use App\Domain\Fleet\Services\ComplianceChecker;
@@ -17,10 +18,12 @@ use App\Models\VesselDischarge;
 use Illuminate\Support\Collection;
 
 /**
- * Pure read-side rules that turn the current state of the terminal into
- * a ranked list of things an operator should look at.
+ * Things a person should act on, ranked, and only the ones that person can act on.
+ * Normal progress (a ship discharging, an order loading) is not an alert: the dashboard boards show it.
  *
- * @phpstan-type Alert array{level: 'danger'|'warning'|'info', title: string, detail: string}
+ * Each alert carries a `target` so the UI can link to the right screen without this class knowing about the UI.
+ *
+ * @phpstan-type Alert array{level: 'danger'|'warning'|'info', title: string, detail: string, target: array{type: string, id?: int}}
  */
 class OperationalAlerts
 {
@@ -30,17 +33,23 @@ class OperationalAlerts
 
     public const TRUCK_OVERSTAY_HOURS = 12;
 
-    /** @return Collection<int, array{level: string, title: string, detail: string}> */
-    public function all(int $limit = 10): Collection
+    /** @return Collection<int, array{level: string, title: string, detail: string, target: array<string, mixed>}> */
+    public function forRole(Role $role, int $limit = 12): Collection
     {
-        return collect([
+        if (! $role->canSeeAlerts()) {
+            return collect();
+        }
+
+        $alerts = [
             ...$this->tankAlerts(),
             ...$this->vesselAlerts(),
             ...$this->orderAlerts(),
-            ...$this->correctionAlerts(),
             ...$this->truckAlerts(),
-            ...$this->documentAlerts(),
-        ])
+            ...($role->canApprove() ? $this->correctionAlerts() : []),
+            ...($role->canViewRegisters() ? $this->documentAlerts() : []),
+        ];
+
+        return collect($alerts)
             ->sortBy(fn ($a) => ['danger' => 0, 'warning' => 1, 'info' => 2][$a['level']])
             ->values()
             ->take($limit);
@@ -52,13 +61,14 @@ class OperationalAlerts
         foreach (Tank::orderBy('code')->get() as $t) {
             $pct = $t->fillPercent();
             $free = number_format(($t->capacity_kg - $t->current_volume_kg) / 1000, 1);
+            $target = ['type' => 'tank', 'id' => $t->id];
 
             if ($pct >= 100) {
-                $out[] = ['level' => 'danger', 'title' => "{$t->code} is full", 'detail' => 'No free capacity: new discharges will be rejected.'];
+                $out[] = ['level' => 'danger', 'title' => "{$t->code} is full", 'detail' => 'No free capacity: new discharges will be rejected.', 'target' => $target];
             } elseif ($pct >= self::NEAR_FULL_PERCENT) {
-                $out[] = ['level' => 'warning', 'title' => "{$t->code} nearly full ({$pct}%)", 'detail' => "{$free} t of free space left."];
+                $out[] = ['level' => 'warning', 'title' => "{$t->code} nearly full ({$pct}%)", 'detail' => "{$free} t of free space left.", 'target' => $target];
             } elseif ($t->current_volume_kg > 0 && $pct <= self::LOW_STOCK_PERCENT) {
-                $out[] = ['level' => 'warning', 'title' => "{$t->code} low stock ({$pct}%)", 'detail' => 'Check upcoming deliveries against what is in the tank.'];
+                $out[] = ['level' => 'warning', 'title' => "{$t->code} low stock ({$pct}%)", 'detail' => 'Check upcoming deliveries against what is in the tank.', 'target' => $target];
             }
         }
 
@@ -71,17 +81,26 @@ class OperationalAlerts
         $open = VesselDischarge::withTotals()->whereNotIn('status', [DischargeStatus::Completed->value, DischargeStatus::Cancelled->value])->get();
 
         foreach ($open as $d) {
+            $target = ['type' => 'voyage', 'id' => $d->id];
+
             if ($d->status === DischargeStatus::Scheduled && $d->eta && $d->eta->isPast()) {
-                $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name}: ETA passed", 'detail' => "{$d->voyage_ref} is still scheduled; ETA was {$d->eta->format('d M H:i')}."];
-            } elseif ($d->status === DischargeStatus::Discharging) {
+                $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name}: ETA passed", 'detail' => "{$d->voyage_ref} is still scheduled; ETA was {$d->eta->format('d M H:i')}.", 'target' => $target];
+            } elseif ($d->status === DischargeStatus::Discharging && $d->started_at && $d->started_at->lt(now()->subHours(48))) {
                 $left = number_format($d->remainingKg() / 1000, 1);
-                $long = $d->started_at && $d->started_at->lt(now()->subHours(48));
-                $out[] = [
-                    'level' => $long ? 'warning' : 'info',
-                    'title' => "{$d->vessel_name} discharging".($long ? ' for over 48 h' : ''),
-                    'detail' => "{$d->voyage_ref}: {$left} t left on the bill of lading ({$d->progressPercent()}% received).",
-                ];
+                $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name} discharging for over 48 h", 'detail' => "{$d->voyage_ref}: {$left} t left on the bill of lading ({$d->progressPercent()}% received).", 'target' => $target];
             }
+        }
+
+        return $out;
+    }
+
+    private function orderAlerts(): array
+    {
+        $out = [];
+        $overdue = DeliveryOrder::where('status', OrderStatus::Pending->value)->whereNotNull('scheduled_at')->where('scheduled_at', '<', now())->get();
+
+        foreach ($overdue as $o) {
+            $out[] = ['level' => 'warning', 'title' => "{$o->order_ref} overdue", 'detail' => "{$o->customer}: scheduled for {$o->scheduled_at->format('d M H:i')} but not started.", 'target' => ['type' => 'order', 'id' => $o->id]];
         }
 
         return $out;
@@ -93,20 +112,34 @@ class OperationalAlerts
         $out = [];
 
         foreach (TruckVisit::whereNotNull('active_truck_id')->with('truck')->orderBy('gate_in_at')->get() as $v) {
+            $target = ['type' => 'visit', 'id' => $v->id];
             $warnings = $v->warnings ?? [];
+
             if ($warnings) {
                 $more = count($warnings) > 2 ? ' (+'.(count($warnings) - 2).' more)' : '';
-                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site with warnings", 'detail' => implode('; ', array_slice($warnings, 0, 2)).$more];
+                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site with warnings", 'detail' => implode('; ', array_slice($warnings, 0, 2)).$more, 'target' => $target];
             }
             if ($v->gate_in_at->lt(now()->subHours(self::TRUCK_OVERSTAY_HOURS))) {
-                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site for over ".self::TRUCK_OVERSTAY_HOURS.' h', 'detail' => "{$v->ref} ({$v->status->label()}) arrived ".$v->gate_in_at->diffForHumans().'.'];
+                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site for over ".self::TRUCK_OVERSTAY_HOURS.' h', 'detail' => "{$v->ref} ({$v->status->label()}) arrived ".$v->gate_in_at->diffForHumans().'.', 'target' => $target];
             }
         }
 
         return $out;
     }
 
-    /** One summary line for the registers: how many active trucks / drivers have documents to chase. */
+    private function correctionAlerts(): array
+    {
+        $n = CorrectionRequest::where('status', CorrectionStatus::Pending->value)->count();
+
+        return $n === 0 ? [] : [[
+            'level' => 'warning',
+            'title' => "{$n} correction request".($n === 1 ? '' : 's').' awaiting approval',
+            'detail' => 'Approve or reject them (Operations → Corrections).',
+            'target' => ['type' => 'corrections'],
+        ]];
+    }
+
+    /** One summary line: how many active trucks / drivers have documents to chase. */
     private function documentAlerts(): array
     {
         $needAttention = fn ($expiry) => in_array(ComplianceChecker::statusOf($expiry), [DocumentStatus::Expired, DocumentStatus::ExpiringSoon], true);
@@ -118,34 +151,7 @@ class OperationalAlerts
             'level' => 'info',
             'title' => 'Documents to chase: '.implode(' and ', array_filter([$trucks ? "{$trucks} truck".($trucks === 1 ? '' : 's') : null, $drivers ? "{$drivers} driver".($drivers === 1 ? '' : 's') : null])),
             'detail' => 'Expired or expiring within '.DocumentStatus::SOON_DAYS.' days (Registers → Trucks / Drivers). They warn at the gate but never block.',
+            'target' => ['type' => 'trucks'],
         ]];
-    }
-
-    private function correctionAlerts(): array
-    {
-        $n = CorrectionRequest::where('status', CorrectionStatus::Pending->value)->count();
-
-        return $n === 0 ? [] : [[
-            'level' => 'warning',
-            'title' => "{$n} correction request".($n === 1 ? '' : 's').' awaiting approval',
-            'detail' => 'A supervisor must approve or reject them (Operations → Corrections).',
-        ]];
-    }
-
-    private function orderAlerts(): array
-    {
-        $out = [];
-        $open = DeliveryOrder::withTotals()->whereNotIn('status', [OrderStatus::Completed->value, OrderStatus::Cancelled->value])->get();
-
-        foreach ($open as $o) {
-            if ($o->status === OrderStatus::Pending && $o->scheduled_at && $o->scheduled_at->isPast()) {
-                $out[] = ['level' => 'warning', 'title' => "{$o->order_ref} overdue", 'detail' => "{$o->customer}: scheduled for {$o->scheduled_at->format('d M H:i')} but not started."];
-            } elseif ($o->status === OrderStatus::Loading) {
-                $left = number_format($o->remainingKg() / 1000, 1);
-                $out[] = ['level' => 'info', 'title' => "{$o->order_ref} loading", 'detail' => "{$o->customer}: {$left} t still to load ({$o->progressPercent()}% delivered)."];
-            }
-        }
-
-        return $out;
     }
 }

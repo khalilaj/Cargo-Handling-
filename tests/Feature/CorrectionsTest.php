@@ -16,8 +16,8 @@ use App\Domain\Corrections\Exceptions\NotAuthorizedException;
 use App\Domain\Corrections\Exceptions\SelfApprovalException;
 use App\Filament\Resources\CargoMovementResource\Pages\ListCargoMovements;
 use App\Filament\Resources\CorrectionRequestResource\Pages\ListCorrectionRequests;
-use App\Filament\Widgets\AlertsPanel;
 use App\Filament\Widgets\StockOverview;
+use App\Livewire\AlertsBell;
 use App\Models\AuditLog;
 use App\Models\CargoMovement;
 use App\Models\CorrectionRequest;
@@ -309,17 +309,17 @@ class CorrectionsTest extends TestCase
         // the movement no longer offers another request while one is pending
         Livewire::test(ListCargoMovements::class)->assertActionHidden(TestAction::make('request_correction')->table($m->fresh()));
 
-        // an operator cannot decide
-        Livewire::test(ListCorrectionRequests::class)->assertActionHidden(TestAction::make('approve')->table($req));
+        // the approvals queue is not even open to an operator
+        $this->get('/admin/correction-requests')->assertForbidden();
 
         $this->login(Role::Supervisor);
-        Livewire::test(AlertsPanel::class)->assertSee('1 correction request awaiting approval');
+        Livewire::test(AlertsBell::class)->assertSee('1 correction request awaiting approval');
         Livewire::test(ListCorrectionRequests::class)
             ->callAction(TestAction::make('approve')->table($req), data: ['note' => 'ok'])
             ->assertNotified('Correction approved: reversal recorded');
 
         $this->assertTrue($m->fresh()->isReversed());
-        Livewire::test(AlertsPanel::class)->assertDontSee('awaiting approval');
+        Livewire::test(AlertsBell::class)->assertDontSee('awaiting approval');
     }
 
     public function test_the_self_approval_attempt_in_the_ui_is_refused_with_a_message(): void
@@ -344,14 +344,18 @@ class CorrectionsTest extends TestCase
         Livewire::test(StockOverview::class)->assertSee('33.50 t');
     }
 
-    public function test_correction_screens_load_for_every_role(): void
+    public function test_correction_screens_are_for_approvers_and_auditors(): void
     {
         $req = $this->request('seed-6');
 
-        foreach (Role::cases() as $r) {
+        foreach ([Role::Admin, Role::Supervisor, Role::Auditor] as $r) {
             $this->login($r);
             $this->get('/admin/correction-requests')->assertOk();
             $this->get("/admin/correction-requests/{$req->id}")->assertOk();
         }
+
+        $this->login(Role::Operator);                                   // operators raise a correction from the ledger, nothing more
+        $this->get('/admin/correction-requests')->assertForbidden();
+        $this->get("/admin/correction-requests/{$req->id}")->assertForbidden();
     }
 }

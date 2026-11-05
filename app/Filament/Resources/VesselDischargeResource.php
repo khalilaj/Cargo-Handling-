@@ -59,7 +59,7 @@ class VesselDischargeResource extends Resource
             Section::make('Vessel')->columns(4)->schema([
                 TextEntry::make('voyage_ref')->label('Voyage'),
                 TextEntry::make('vessel_name')->label('Vessel')
-                    ->url(fn (VesselDischarge $record) => $record->vessel_id ? VesselResource::getUrl('view', ['record' => $record->vessel_id]) : null),
+                    ->url(fn (VesselDischarge $record) => $record->vessel_id && auth()->user()?->can('view', $record->vessel) ? VesselResource::getUrl('view', ['record' => $record->vessel_id]) : null),
                 TextEntry::make('berth.code')->label('Berth')->placeholder('Not yet berthed'),
                 TextEntry::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
                 TextEntry::make('status')->badge()
