@@ -1,0 +1,36 @@
+# One-click deploy: Render dashboard -> New -> Blueprint -> pick this repo.
+services:
+  - type: web
+    name: cargo-handling
+    runtime: docker
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false                  # paste the output of: php artisan key:generate --show
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: cargo-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: CACHE_STORE
+        value: file
+      - key: ADMIN_EMAIL
+        value: admin@cargo.test
+      - key: ADMIN_PASSWORD
+        sync: false                  # you type this in the Render dashboard
+      - key: INGEST_TOKEN
+        generateValue: true
+
+databases:
+  - name: cargo-db
+    plan: free
