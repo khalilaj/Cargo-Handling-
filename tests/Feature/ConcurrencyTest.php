@@ -7,11 +7,15 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Cargo\Enums\MovementType;
 use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Corrections\Actions\RequestCorrection;
+use App\Domain\Fleet\Actions\TruckVisitWorkflow;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
+use App\Models\Berth;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
+use App\Models\Truck;
+use App\Models\TruckVisit;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -145,5 +149,64 @@ class ConcurrencyTest extends TestCase
         $this->assertSame(1, $approved, 'exactly one approver wins');
         $this->assertSame(1, CargoMovement::whereNotNull('reverses_movement_id')->count(), 'exactly one reversal row');
         $this->assertSame(1_000_000, $tank->fresh()->current_volume_kg, 'tank is back to its opening level, not credited twice');
+    }
+
+    public function test_parallel_gate_ins_of_one_truck_admit_exactly_one(): void
+    {
+        DeliveryOrder::create(['order_ref' => 'RACE-G', 'customer' => 'Race Ltd', 'commodity' => Commodity::CPOL, 'ordered_kg' => 100_000, 'status' => OrderStatus::Loading]);
+        Truck::create(['plate' => 'KRC 001A', 'capacity_kg' => 30_000]);
+
+        $procs = [];
+        for ($i = 0; $i < 12; $i++) {
+            $procs[] = new Process([PHP_BINARY, 'artisan', 'cargo:gate-in', 'RACE-G', 'KRC 001A'], base_path(), null, null, 60);
+        }
+        $this->runAll($procs);
+
+        $admitted = collect($procs)->filter(fn ($p) => str_starts_with(trim($p->getOutput()), 'gated-in'))->count();
+
+        $this->assertSame(1, $admitted, 'one gate wins');
+        $this->assertSame(1, TruckVisit::whereNotNull('active_truck_id')->count(), 'exactly one open visit for the truck');
+    }
+
+    public function test_parallel_loads_never_exceed_a_trucks_payload(): void
+    {
+        Tank::create(['code' => 'RACE-T6', 'name' => 'Race', 'commodity' => Commodity::CPOL, 'capacity_kg' => 50_000_000,
+            'opening_volume_kg' => 5_000_000, 'current_volume_kg' => 5_000_000]);
+        $order = DeliveryOrder::create(['order_ref' => 'RACE-L', 'customer' => 'Race Ltd', 'commodity' => Commodity::CPOL, 'ordered_kg' => 1_000_000, 'status' => OrderStatus::Loading]);
+        $truck = Truck::create(['plate' => 'KRC 002B', 'capacity_kg' => 30_000]);
+
+        $flow = app(TruckVisitWorkflow::class);
+        $visit = $flow->startLoading($flow->weighIn($flow->gateIn($order, $truck), 14_000));
+
+        $procs = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $procs[] = $this->proc('RACE-T6', 'truck_delivery', '10000', "pl-$i", '--order=RACE-L', "--visit={$visit->id}");
+        }
+        $this->runAll($procs);
+
+        $applied = collect($procs)->filter(fn ($p) => str_starts_with(trim($p->getOutput()), 'applied'))->count();
+
+        $this->assertSame(3, $applied, 'a 30,000 kg payload takes exactly three 10,000 kg loads');
+        $this->assertSame(30_000, $visit->fresh()->loadedKg());
+        $this->assertSame(4_970_000, Tank::where('code', 'RACE-T6')->first()->current_volume_kg);
+    }
+
+    public function test_two_ships_racing_for_one_berth_never_both_get_it(): void
+    {
+        $berth = Berth::create(['code' => 'RB1', 'name' => 'Race berth']);
+        foreach (['A', 'B'] as $x) {
+            VesselDischarge::create(['voyage_ref' => "RACE-V{$x}", 'vessel_name' => "MV Race {$x}", 'commodity' => Commodity::CPO, 'bl_quantity_kg' => 1000]);
+        }
+
+        $procs = [];
+        for ($i = 0; $i < 10; $i++) {
+            $procs[] = new Process([PHP_BINARY, 'artisan', 'cargo:berth', $i % 2 ? 'RACE-VA' : 'RACE-VB', 'RB1'], base_path(), null, null, 60);
+        }
+        $this->runAll($procs);
+
+        $berthed = collect($procs)->filter(fn ($p) => trim($p->getOutput()) === 'berthed')->count();
+
+        $this->assertSame(1, $berthed, 'only one ship can be alongside');
+        $this->assertSame(1, VesselDischarge::where('berth_id', $berth->id)->count());
     }
 }

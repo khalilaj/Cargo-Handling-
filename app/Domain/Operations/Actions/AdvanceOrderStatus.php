@@ -22,6 +22,15 @@ class AdvanceOrderStatus
                 );
             }
 
+            if (in_array($to, [OrderStatus::Completed, OrderStatus::Cancelled], true)) {
+                $onSite = $o->visits()->whereNotNull('active_truck_id')->with('truck')->get();
+                if ($onSite->isNotEmpty()) {
+                    throw new OperationIncompleteException(
+                        "{$o->order_ref} still has trucks on site: ".$onSite->map(fn ($v) => "{$v->truck->plate} ({$v->ref})")->join(', ').'. Gate them out or cancel their visits first.'
+                    );
+                }
+            }
+
             $hasLoads = $o->deliveredKg() > 0;   // net of any reversed movements
 
             if ($to === OrderStatus::Completed && ! $hasLoads) {

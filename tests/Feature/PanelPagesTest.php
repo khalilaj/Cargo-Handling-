@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Fleet\Actions\TruckVisitWorkflow;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
@@ -13,9 +14,12 @@ use App\Filament\Widgets\InventoryTrend;
 use App\Filament\Widgets\RecentMovements;
 use App\Filament\Widgets\StockOverview;
 use App\Filament\Widgets\TankGauges;
+use App\Filament\Widgets\TrucksOnSite;
+use App\Filament\Widgets\VesselsInPort;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
+use App\Models\TruckVisit;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
@@ -57,6 +61,8 @@ class PanelPagesTest extends TestCase
         Livewire::test(TankGauges::class)->assertSee('CPO-01')->assertSee('PFAD-01')->assertSee('free');
         Livewire::test(AlertsPanel::class)->assertSee('Needs attention')->assertSee('MV Borneo Trader');
         Livewire::test(RecentMovements::class)->assertSee('ORD-1002');
+        Livewire::test(VesselsInPort::class)->assertSee('MV Borneo Trader')->assertSee('MV Kenya Star')->assertSee('B1')->assertSee('85%')->assertDontSee('MV Pacific Dawn');
+        Livewire::test(TrucksOnSite::class)->assertSee('KCD 452M')->assertSee('KCB 887L')->assertSee('KDA 999Z')->assertSee('Joseph Kamau');
         Livewire::test(StockOverview::class)->assertSee('Transit loss');
         Livewire::test(InventoryTrend::class)->assertOk();
     }
@@ -134,16 +140,20 @@ class PanelPagesTest extends TestCase
     {
         $o = DeliveryOrder::where('status', OrderStatus::Pending->value)->first();       // ORD-1004, PFAD 200,000
         $pfad = Tank::where('code', 'PFAD-01')->first();
+        $visit = $o->visits()->first();                                                  // KDA 999Z, weighed in at the gate
 
         Livewire::test(ListDeliveryOrders::class)
             ->callAction(TestAction::make('to_loading')->table($o))
             ->assertNotified('Order is now Loading');
 
+        app(TruckVisitWorkflow::class)->startLoading($visit);     // the truck moves to the loading bay
+
         Livewire::test(ViewDeliveryOrder::class, ['record' => $o->id])
-            ->callAction('load', data: ['tank_id' => $pfad->id, 'quantity_kg' => 50_000, 'truck' => 'KDA 999Z', 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-3'])
+            ->callAction('load', data: ['visit_id' => $visit->id, 'tank_id' => $pfad->id, 'quantity_kg' => 20_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-3'])
             ->assertNotified('Truck loaded');
 
-        $this->assertSame(150_000, DeliveryOrder::withTotals()->find($o->id)->remainingKg());
+        $this->assertSame(180_000, DeliveryOrder::withTotals()->find($o->id)->remainingKg());
+        $this->assertSame(20_000, $visit->fresh()->loadedKg());
     }
 
     public function test_seeder_is_idempotent_and_upgrades_an_old_demo_database(): void
@@ -154,6 +164,7 @@ class PanelPagesTest extends TestCase
 
         // Simulate the live database from before operations existed.
         CargoMovement::query()->update(['vessel_discharge_id' => null, 'delivery_order_id' => null]);
+        TruckVisit::query()->delete();             // an old database has no visits either
         VesselDischarge::query()->delete();
         DeliveryOrder::query()->delete();
         $movements = CargoMovement::count();

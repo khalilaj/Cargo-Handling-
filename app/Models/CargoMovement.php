@@ -27,7 +27,7 @@ class CargoMovement extends Model
     protected $fillable = [
         'tank_id', 'type', 'reference', 'gross_kg', 'loss_kg',
         'net_kg', 'occurred_at', 'idempotency_key',
-        'vessel_discharge_id', 'delivery_order_id', 'reverses_movement_id',
+        'vessel_discharge_id', 'delivery_order_id', 'truck_visit_id', 'reverses_movement_id',
     ];
 
     protected function casts(): array
@@ -73,6 +73,11 @@ class CargoMovement extends Model
     {
         return (bool) ($this->attributes['has_pending_correction']
             ?? $this->correctionRequests()->where('status', 'pending')->exists());
+    }
+
+    public function truckVisit(): BelongsTo
+    {
+        return $this->belongsTo(TruckVisit::class);
     }
 
     public function vesselDischarge(): BelongsTo

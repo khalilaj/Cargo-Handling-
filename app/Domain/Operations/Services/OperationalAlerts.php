@@ -3,11 +3,16 @@
 namespace App\Domain\Operations\Services;
 
 use App\Domain\Corrections\Enums\CorrectionStatus;
+use App\Domain\Fleet\Enums\DocumentStatus;
+use App\Domain\Fleet\Services\ComplianceChecker;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\CorrectionRequest;
 use App\Models\DeliveryOrder;
+use App\Models\Driver;
 use App\Models\Tank;
+use App\Models\Truck;
+use App\Models\TruckVisit;
 use App\Models\VesselDischarge;
 use Illuminate\Support\Collection;
 
@@ -23,6 +28,8 @@ class OperationalAlerts
 
     public const LOW_STOCK_PERCENT = 10.0;
 
+    public const TRUCK_OVERSTAY_HOURS = 12;
+
     /** @return Collection<int, array{level: string, title: string, detail: string}> */
     public function all(int $limit = 10): Collection
     {
@@ -31,6 +38,8 @@ class OperationalAlerts
             ...$this->vesselAlerts(),
             ...$this->orderAlerts(),
             ...$this->correctionAlerts(),
+            ...$this->truckAlerts(),
+            ...$this->documentAlerts(),
         ])
             ->sortBy(fn ($a) => ['danger' => 0, 'warning' => 1, 'info' => 2][$a['level']])
             ->values()
@@ -76,6 +85,40 @@ class OperationalAlerts
         }
 
         return $out;
+    }
+
+    /** Trucks on site with document or weighbridge warnings, and trucks that have been here too long. */
+    private function truckAlerts(): array
+    {
+        $out = [];
+
+        foreach (TruckVisit::whereNotNull('active_truck_id')->with('truck')->orderBy('gate_in_at')->get() as $v) {
+            $warnings = $v->warnings ?? [];
+            if ($warnings) {
+                $more = count($warnings) > 2 ? ' (+'.(count($warnings) - 2).' more)' : '';
+                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site with warnings", 'detail' => implode('; ', array_slice($warnings, 0, 2)).$more];
+            }
+            if ($v->gate_in_at->lt(now()->subHours(self::TRUCK_OVERSTAY_HOURS))) {
+                $out[] = ['level' => 'warning', 'title' => "{$v->truck->plate} on site for over ".self::TRUCK_OVERSTAY_HOURS.' h', 'detail' => "{$v->ref} ({$v->status->label()}) arrived ".$v->gate_in_at->diffForHumans().'.'];
+            }
+        }
+
+        return $out;
+    }
+
+    /** One summary line for the registers: how many active trucks / drivers have documents to chase. */
+    private function documentAlerts(): array
+    {
+        $needAttention = fn ($expiry) => in_array(ComplianceChecker::statusOf($expiry), [DocumentStatus::Expired, DocumentStatus::ExpiringSoon], true);
+
+        $trucks = Truck::where('active', true)->get()->filter(fn (Truck $t) => $needAttention($t->insurance_expiry) || $needAttention($t->inspection_expiry))->count();
+        $drivers = Driver::where('active', true)->get()->filter(fn (Driver $d) => $needAttention($d->licence_expiry))->count();
+
+        return $trucks + $drivers === 0 ? [] : [[
+            'level' => 'info',
+            'title' => 'Documents to chase: '.implode(' and ', array_filter([$trucks ? "{$trucks} truck".($trucks === 1 ? '' : 's') : null, $drivers ? "{$drivers} driver".($drivers === 1 ? '' : 's') : null])),
+            'detail' => 'Expired or expiring within '.DocumentStatus::SOON_DAYS.' days (Registers → Trucks / Drivers). They warn at the gate but never block.',
+        ]];
     }
 
     private function correctionAlerts(): array
