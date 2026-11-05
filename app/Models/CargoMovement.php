@@ -11,6 +11,7 @@ class CargoMovement extends Model
     protected $fillable = [
         'tank_id', 'type', 'reference', 'gross_kg', 'loss_kg',
         'net_kg', 'occurred_at', 'idempotency_key',
+        'vessel_discharge_id', 'delivery_order_id',
     ];
 
     protected function casts(): array
@@ -22,6 +23,16 @@ class CargoMovement extends Model
             'net_kg' => 'integer',
             'occurred_at' => 'datetime',
         ];
+    }
+
+    public function vesselDischarge(): BelongsTo
+    {
+        return $this->belongsTo(VesselDischarge::class);
+    }
+
+    public function deliveryOrder(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryOrder::class);
     }
 
     public function tank(): BelongsTo

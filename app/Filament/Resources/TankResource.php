@@ -7,6 +7,11 @@ use App\Filament\Resources\TankResource\Pages;
 use App\Models\Tank;
 use BackedEnum;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
+use App\Filament\Resources\RelationManagers\MovementsRelationManager;
+use UnitEnum;
 use Filament\Forms;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -18,7 +23,10 @@ class TankResource extends Resource
 {
     protected static ?string $model = Tank::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
+    protected static string|UnitEnum|null $navigationGroup = 'Inventory';
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationLabel = 'Storage tanks';
+    protected static ?string $recordTitleAttribute = 'code';
 
     public static function form(Schema $schema): Schema
     {
@@ -41,12 +49,39 @@ class TankResource extends Resource
         ]);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Tank')->columns(4)->schema([
+                TextEntry::make('code'),
+                TextEntry::make('name'),
+                TextEntry::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
+                TextEntry::make('requires_heating')->label('Temperature control')
+                    ->formatStateUsing(fn ($state) => $state ? 'Heated (CPO)' : 'Not required'),
+            ]),
+            Section::make('Level')->columns(4)->schema([
+                TextEntry::make('current_volume_kg')->label('In tank (kg)')->numeric(),
+                TextEntry::make('capacity_kg')->label('Capacity (kg)')->numeric(),
+                TextEntry::make('free')->label('Free space (kg)')
+                    ->state(fn (Tank $t) => number_format($t->capacity_kg - $t->current_volume_kg)),
+                TextEntry::make('fill')->label('Filled')->state(fn (Tank $t) => $t->fillPercent() . '%')->badge()
+                    ->color(fn (Tank $t) => $t->fillPercent() >= 90 ? 'danger' : ($t->fillPercent() >= 70 ? 'warning' : 'success')),
+            ]),
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->poll('10s')
+            ->recordUrl(fn (Tank $t) => static::getUrl('view', ['record' => $t]))
             ->columns(self::levelColumns())
-            ->recordActions([EditAction::make()]);
+            ->recordActions([ViewAction::make(), EditAction::make()]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [MovementsRelationManager::class];
     }
 
     /** Also reused by the dashboard widget. */
@@ -75,6 +110,7 @@ class TankResource extends Resource
         return [
             'index' => Pages\ListTanks::route('/'),
             'create' => Pages\CreateTank::route('/create'),
+            'view' => Pages\ViewTank::route('/{record}'),
             'edit' => Pages\EditTank::route('/{record}/edit'),
         ];
     }

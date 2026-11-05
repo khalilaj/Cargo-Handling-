@@ -37,6 +37,7 @@ class TankLedger
         string $idempotencyKey,
         ?string $reference = null,
         ?Commodity $commodity = null,
+        array $links = [],   // optional FKs: vessel_discharge_id / delivery_order_id
     ): CargoMovement {
         if ($grossKg <= 0) {
             throw new InvalidArgumentException('Quantity must be greater than zero.');
@@ -44,7 +45,7 @@ class TankLedger
 
         try {
             return DB::transaction(function () use (
-                $tankId, $type, $grossKg, $occurredAt, $idempotencyKey, $reference, $commodity
+                $tankId, $type, $grossKg, $occurredAt, $idempotencyKey, $reference, $commodity, $links
             ) {
                 $tank = Tank::query()->lockForUpdate()->findOrFail($tankId);
 
@@ -70,6 +71,7 @@ class TankLedger
                     'net_kg' => $grossKg - $loss,
                     'occurred_at' => $occurredAt,
                     'idempotency_key' => $idempotencyKey,
+                    ...$links,
                 ]);
 
                 // Throws (and rolls the insert back) if the timeline breaks a rule.

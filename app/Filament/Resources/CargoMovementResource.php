@@ -6,6 +6,7 @@ use App\Domain\Cargo\Enums\MovementType;
 use App\Filament\Resources\CargoMovementResource\Pages;
 use App\Models\CargoMovement;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,6 +15,8 @@ class CargoMovementResource extends Resource
 {
     protected static ?string $model = CargoMovement::class;
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static string|UnitEnum|null $navigationGroup = 'Inventory';
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Cargo movements';
 
     /** Movements are an immutable ledger: no create/edit/delete screens. */
@@ -24,6 +27,7 @@ class CargoMovementResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['tank', 'vesselDischarge', 'deliveryOrder']))
             ->defaultSort('occurred_at', 'desc')
             ->poll('10s')
             ->columns([
@@ -32,6 +36,8 @@ class CargoMovementResource extends Resource
                     ->formatStateUsing(fn (MovementType $state) => $state->label())
                     ->color(fn (MovementType $state) => $state->isInbound() ? 'info' : 'warning'),
                 Tables\Columns\TextColumn::make('tank.code')->label('Tank')->searchable(),
+                Tables\Columns\TextColumn::make('operation')->label('Operation')
+                    ->state(fn (CargoMovement $m) => $m->vesselDischarge?->voyage_ref ?? $m->deliveryOrder?->order_ref ?? 'Ad hoc'),
                 Tables\Columns\TextColumn::make('reference')->label('Vessel / truck')->searchable(),
                 Tables\Columns\TextColumn::make('gross_kg')->label('Gross (kg)')->numeric(),
                 Tables\Columns\TextColumn::make('loss_kg')->label('Transit loss (kg)')->numeric(),
