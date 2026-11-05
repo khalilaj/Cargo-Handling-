@@ -88,7 +88,7 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 171 pass, 8 concurrency tests skipped on SQLite (it cannot lock rows). On PostgreSQL all **179 pass** with nothing skipped. Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- `php artisan test` — 217 pass, 8 concurrency tests skipped on SQLite (it cannot lock rows). On PostgreSQL all **225 pass** with nothing skipped. Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers. `tests/Feature/Roles/` is the role-coverage suite: every route per role, every policy ability per role (336 decisions), exact menus, a link crawler, action buttons per record status, crafted-request refusals, and empty/edge-state rendering.
 - Real concurrency on Postgres (parallel processes; the CI job runs these too): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, two supervisors approving the same correction at once, twelve gates admitting one truck, loads racing for one truck's payload, and two ships racing for one berth:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \
