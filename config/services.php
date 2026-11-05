@@ -35,7 +35,6 @@ return [
         ],
     ],
 
-
     'ingest' => [
         'token' => env('INGEST_TOKEN'),
     ],
