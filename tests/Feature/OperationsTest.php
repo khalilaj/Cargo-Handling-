@@ -30,13 +30,13 @@ class OperationsTest extends TestCase
 
     private function tank(Commodity $c = Commodity::CPOL, int $cap = 10_000_000): Tank
     {
-        return Tank::create(['code' => 'T-' . uniqid(), 'name' => 'T', 'commodity' => $c, 'capacity_kg' => $cap]);
+        return Tank::create(['code' => 'T-'.uniqid(), 'name' => 'T', 'commodity' => $c, 'capacity_kg' => $cap]);
     }
 
     private function discharge(int $bl = 1_000_000, Commodity $c = Commodity::CPOL, ?DischargeStatus $s = null): VesselDischarge
     {
         return VesselDischarge::create([
-            'voyage_ref' => 'V-' . uniqid(), 'vessel_name' => 'MV Test', 'commodity' => $c,
+            'voyage_ref' => 'V-'.uniqid(), 'vessel_name' => 'MV Test', 'commodity' => $c,
             'bl_quantity_kg' => $bl, 'status' => $s ?? DischargeStatus::Discharging,
         ]);
     }
@@ -44,7 +44,7 @@ class OperationsTest extends TestCase
     private function order(int $qty = 500_000, ?OrderStatus $s = null, Commodity $c = Commodity::CPOL): DeliveryOrder
     {
         return DeliveryOrder::create([
-            'order_ref' => 'O-' . uniqid(), 'customer' => 'Acme Foods', 'commodity' => $c,
+            'order_ref' => 'O-'.uniqid(), 'customer' => 'Acme Foods', 'commodity' => $c,
             'ordered_kg' => $qty, 'status' => $s ?? OrderStatus::Loading,
         ]);
     }

@@ -13,6 +13,7 @@ class CreateDeliveryOrder extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['status'] = OrderStatus::Pending->value;
+
         return $data;
     }
 }

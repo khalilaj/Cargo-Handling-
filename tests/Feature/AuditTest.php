@@ -3,19 +3,21 @@
 namespace Tests\Feature;
 
 use App\Domain\Access\Role;
+use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\RecordDischargeIntoTank;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\AuditLogResource\Pages\ListAuditLogs;
 use App\Models\AuditLog;
+use App\Models\CargoMovement;
 use App\Models\Tank;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use LogicException;
 use Livewire\Livewire;
+use LogicException;
 use Tests\TestCase;
 
 class AuditTest extends TestCase
@@ -86,11 +88,19 @@ class AuditTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $row = AuditLog::first();
 
-        try { $row->update(['description' => 'tampered']); $this->fail('update should throw'); }
-        catch (LogicException $e) { $this->assertStringContainsString('immutable', $e->getMessage()); }
+        try {
+            $row->update(['description' => 'tampered']);
+            $this->fail('update should throw');
+        } catch (LogicException $e) {
+            $this->assertStringContainsString('immutable', $e->getMessage());
+        }
 
-        try { $row->delete(); $this->fail('delete should throw'); }
-        catch (LogicException $e) { $this->assertStringContainsString('cannot be deleted', $e->getMessage()); }
+        try {
+            $row->delete();
+            $this->fail('delete should throw');
+        } catch (LogicException $e) {
+            $this->assertStringContainsString('cannot be deleted', $e->getMessage());
+        }
 
         $this->assertSame(AuditLog::count(), AuditLog::count());
         $this->assertNotSame('tampered', $row->fresh()->description);
@@ -179,8 +189,8 @@ class AuditTest extends TestCase
         $d = AuditLog::where('event', 'vessel_discharge.updated')->latest('id')->first()->description;
         $this->assertStringContainsString('status: berthed → discharging', $d);        // not "…"
 
-        $original = \App\Models\CargoMovement::where('idempotency_key', 'seed-6')->first();
-        app(\App\Domain\Cargo\Services\TankLedger::class)->reverse($original, now()->addMinute(), 'rev-test');
+        $original = CargoMovement::where('idempotency_key', 'seed-6')->first();
+        app(TankLedger::class)->reverse($original, now()->addMinute(), 'rev-test');
         $this->assertStringContainsString("reversal of #{$original->id}", AuditLog::where('event', 'cargo_movement.created')->latest('id')->first()->description);
     }
 }

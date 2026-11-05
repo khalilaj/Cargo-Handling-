@@ -26,9 +26,7 @@ use InvalidArgumentException;
  */
 class TankLedger
 {
-    public function __construct(private TransitLossCalculator $loss)
-    {
-    }
+    public function __construct(private TransitLossCalculator $loss) {}
 
     public function record(
         int $tankId,

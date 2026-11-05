@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Audit\Auditable;
+use App\Domain\Cargo\Enums\Commodity;
+use App\Observers\TankObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[\Illuminate\Database\Eloquent\Attributes\ObservedBy(\App\Observers\TankObserver::class)]
+#[ObservedBy(TankObserver::class)]
 class Tank extends Model
 {
     use Auditable;

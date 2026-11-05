@@ -23,6 +23,7 @@ php artisan test
 
 - **Operations → Corrections:** the ledger is immutable, so a mistake is fixed by a **reversal movement**. An operator requests it (with a reason), and a *different* supervisor approves (four-eyes rule). The reversal mirrors the original exactly, restores the tank, the bill of lading / order balance and the transit-loss figure, and can be applied only once. If the tank could not legally take it back (for example the cargo has since been delivered), nothing changes and the request stays open.
 - **Administration → Audit log:** an append-only record of who changed what (before/after values, role, time, IP). Passwords are never logged; the fact that one changed is.
+- **Reports → Terminal reports:** stock position per product for any period (opening, discharged, transit loss, delivered, closing, with a "reconciles" check against the ledger), vessel reconciliation (bill of lading vs received) and delivery fulfilment. Each exports to **CSV** (spreadsheet formulas are neutralised) and all three to one **PDF**.
 - **Administration → Users & roles** (admin only).
 
 Every status change and movement goes through a domain action; Filament only calls them and shows the result.
@@ -76,13 +77,24 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 76 pass, 5 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- `php artisan test` — 89 pass, 5 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
 - Real concurrency on Postgres (20 parallel processes each): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, and two supervisors approving the same correction at once:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \
     php artisan test --filter Concurrency
   ```
   Verified by negative control: with each row lock removed the matching test fails (11 pumps fit a 10-pump bill of lading; 8 loads fit a 6-load order).
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | What it checks |
+| --- | --- |
+| **Code style** | Laravel Pint (`vendor/bin/pint --test`), blocking |
+| **Tests (SQLite)** | the full suite, blocking |
+| **Tests + real concurrency (PostgreSQL 16)** | the same suite with the 5 parallel-process tests *enabled*, blocking |
+| **Static analysis** | PHPStan + Larastan (`phpstan.neon`, level 5), **advisory for now**: it has not been run locally yet, so it should be promoted to blocking after its first green run |
 
 ## Deploy (Render)
 

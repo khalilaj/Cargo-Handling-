@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*'); // behind the host's HTTPS load balancer
+        $middleware->redirectGuestsTo(fn () => url('/admin/login'));
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {

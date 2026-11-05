@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain\Access\Role;
 use App\Domain\Cargo\Exceptions\InsufficientStockException;
 use App\Domain\Cargo\Exceptions\MovementNotReversibleException;
+use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Corrections\Actions\ApproveCorrection;
 use App\Domain\Corrections\Actions\RejectCorrection;
 use App\Domain\Corrections\Actions\RequestCorrection;
@@ -151,11 +152,19 @@ class CorrectionsTest extends TestCase
         $req = $this->request('seed-6');
 
         foreach ([Role::Operator, Role::Auditor] as $role) {
-            try { $this->approve($req, $this->user($role)); $this->fail("{$role->value} approved"); }
-            catch (NotAuthorizedException) { $this->assertTrue(true); }
+            try {
+                $this->approve($req, $this->user($role));
+                $this->fail("{$role->value} approved");
+            } catch (NotAuthorizedException) {
+                $this->assertTrue(true);
+            }
 
-            try { app(RejectCorrection::class)($req, $this->user($role), 'no thanks at all'); $this->fail("{$role->value} rejected"); }
-            catch (NotAuthorizedException) { $this->assertTrue(true); }
+            try {
+                app(RejectCorrection::class)($req, $this->user($role), 'no thanks at all');
+                $this->fail("{$role->value} rejected");
+            } catch (NotAuthorizedException) {
+                $this->assertTrue(true);
+            }
         }
         $this->assertSame(CorrectionStatus::Pending, $req->fresh()->status);
     }
@@ -186,18 +195,30 @@ class CorrectionsTest extends TestCase
     {
         $r = $this->approve($this->request('seed-6'));
 
-        try { $this->request('seed-6'); $this->fail('already reversed'); }
-        catch (InvalidCorrectionException $e) { $this->assertStringContainsString('already been reversed', $e->getMessage()); }
+        try {
+            $this->request('seed-6');
+            $this->fail('already reversed');
+        } catch (InvalidCorrectionException $e) {
+            $this->assertStringContainsString('already been reversed', $e->getMessage());
+        }
 
         // And the ledger itself refuses a second reversal even if the workflow were bypassed.
-        try { app(\App\Domain\Cargo\Services\TankLedger::class)->reverse($this->move('seed-6'), now(), 'another-key'); $this->fail(); }
-        catch (MovementNotReversibleException) { $this->assertTrue(true); }
+        try {
+            app(TankLedger::class)->reverse($this->move('seed-6'), now(), 'another-key');
+            $this->fail();
+        } catch (MovementNotReversibleException) {
+            $this->assertTrue(true);
+        }
 
         // A reversal can not be corrected, nor reversed.
-        try { app(RequestCorrection::class)($r->reversal, $this->user(Role::Operator), self::REASON); $this->fail(); }
-        catch (InvalidCorrectionException) { $this->assertTrue(true); }
+        try {
+            app(RequestCorrection::class)($r->reversal, $this->user(Role::Operator), self::REASON);
+            $this->fail();
+        } catch (InvalidCorrectionException) {
+            $this->assertTrue(true);
+        }
         $this->expectException(MovementNotReversibleException::class);
-        app(\App\Domain\Cargo\Services\TankLedger::class)->reverse($r->reversal, now(), 'rev-of-rev');
+        app(TankLedger::class)->reverse($r->reversal, now(), 'rev-of-rev');
     }
 
     public function test_a_decision_cannot_be_taken_twice(): void
@@ -233,8 +254,12 @@ class CorrectionsTest extends TestCase
         $req = $this->request('seed-6');
         $count = CargoMovement::count();
 
-        try { app(RejectCorrection::class)($req, $this->user(Role::Supervisor), ' '); $this->fail(); }
-        catch (InvalidCorrectionException) { $this->assertTrue(true); }
+        try {
+            app(RejectCorrection::class)($req, $this->user(Role::Supervisor), ' ');
+            $this->fail();
+        } catch (InvalidCorrectionException) {
+            $this->assertTrue(true);
+        }
 
         $req = app(RejectCorrection::class)($req, $this->user(Role::Supervisor), 'The ticket matches, no error.');
         $this->assertSame(CorrectionStatus::Rejected, $req->status);
@@ -263,7 +288,7 @@ class CorrectionsTest extends TestCase
 
         $reversal = AuditLog::where('event', 'cargo_movement.created')->latest('id')->first();
         $this->assertSame('supervisor', $reversal->actor_role);
-        $this->assertSame('Reversal of #' . $this->move('seed-6')->id, $reversal->new_values['reference']);
+        $this->assertSame('Reversal of #'.$this->move('seed-6')->id, $reversal->new_values['reference']);
     }
 
     // ---- the screens ------------------------------------------------------------

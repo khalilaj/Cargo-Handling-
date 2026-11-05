@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Domain\Access\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -29,7 +30,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => \App\Domain\Access\Role::Operator,
+            'role' => Role::Operator,
             'remember_token' => Str::random(10),
         ];
     }
@@ -44,7 +45,7 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function role(\App\Domain\Access\Role $role): static
+    public function role(Role $role): static
     {
         return $this->state(fn () => ['role' => $role]);
     }

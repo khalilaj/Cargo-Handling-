@@ -2,6 +2,4 @@
 
 namespace App\Domain\Cargo\Exceptions;
 
-class MovementNotReversibleException extends CargoException
-{
-}
+class MovementNotReversibleException extends CargoException {}

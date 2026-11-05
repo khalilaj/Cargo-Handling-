@@ -3,29 +3,34 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Cargo\Enums\Commodity;
+use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\TankResource\Pages;
 use App\Models\Tank;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Section;
-use App\Filament\Resources\RelationManagers\MovementsRelationManager;
-use UnitEnum;
 use Filament\Forms;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class TankResource extends Resource
 {
     protected static ?string $model = Tank::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
+
     protected static string|UnitEnum|null $navigationGroup = 'Inventory';
+
     protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'Storage tanks';
+
     protected static ?string $recordTitleAttribute = 'code';
 
     public static function form(Schema $schema): Schema
@@ -64,7 +69,7 @@ class TankResource extends Resource
                 TextEntry::make('capacity_kg')->label('Capacity (kg)')->numeric(),
                 TextEntry::make('free')->label('Free space (kg)')
                     ->state(fn (Tank $t) => number_format($t->capacity_kg - $t->current_volume_kg)),
-                TextEntry::make('fill')->label('Filled')->state(fn (Tank $t) => $t->fillPercent() . '%')->badge()
+                TextEntry::make('fill')->label('Filled')->state(fn (Tank $t) => $t->fillPercent().'%')->badge()
                     ->color(fn (Tank $t) => $t->fillPercent() >= 90 ? 'danger' : ($t->fillPercent() >= 70 ? 'warning' : 'success')),
             ]),
         ]);
@@ -94,7 +99,7 @@ class TankResource extends Resource
             Tables\Columns\TextColumn::make('current_volume_kg')->label('In tank (kg)')->numeric(),
             Tables\Columns\TextColumn::make('capacity_kg')->label('Capacity (kg)')->numeric(),
             Tables\Columns\TextColumn::make('fill')->label('Filled')
-                ->state(fn (Tank $t) => $t->fillPercent() . '%')
+                ->state(fn (Tank $t) => $t->fillPercent().'%')
                 ->badge()
                 ->color(fn (Tank $t) => match (true) {
                     $t->fillPercent() >= 90 => 'danger',

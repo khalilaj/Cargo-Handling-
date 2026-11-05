@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use App\Domain\Audit\Auditable;
 use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\OrderStatus;
-use App\Domain\Audit\Auditable;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class DeliveryOrder extends Model
     }
 
     /** Deliveries add, their reversals subtract. */
-    private static function signed(string $column): \Illuminate\Contracts\Database\Query\Expression
+    private static function signed(string $column): Expression
     {
         return DB::raw("CASE WHEN type = 'truck_delivery' THEN {$column} ELSE -{$column} END");
     }

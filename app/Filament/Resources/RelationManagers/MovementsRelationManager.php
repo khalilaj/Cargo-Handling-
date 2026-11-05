@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\RelationManagers;
 
-use App\Domain\Cargo\Enums\MovementType;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -11,6 +10,7 @@ use Filament\Tables\Table;
 class MovementsRelationManager extends RelationManager
 {
     protected static string $relationship = 'movements';
+
     protected static ?string $title = 'Ledger movements';
 
     public function isReadOnly(): bool
@@ -28,7 +28,9 @@ class MovementsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('occurred_at')->label('When')->dateTime('d M Y H:i')->sortable(),
                 Tables\Columns\TextColumn::make('type')->badge()
                     ->state(fn ($record) => $record->isReversal() ? 'Reversal' : ($record->type->isInbound() ? 'Discharge' : 'Delivery'))
-                    ->color(fn ($state) => match ($state) { 'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning' }),
+                    ->color(fn ($state) => match ($state) {
+                        'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning'
+                    }),
                 Tables\Columns\TextColumn::make('tank.code')->label('Tank'),
                 Tables\Columns\TextColumn::make('reference')->label('Vessel / truck'),
                 Tables\Columns\TextColumn::make('gross_kg')->label('Gross (kg)')->numeric(),

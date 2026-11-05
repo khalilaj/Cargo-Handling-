@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Domain\Access\Role;
 use App\Filament\Resources\AuditLogResource\Pages;
 use App\Models\AuditLog;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
@@ -21,16 +21,33 @@ use UnitEnum;
 class AuditLogResource extends Resource
 {
     protected static ?string $model = AuditLog::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
+
     protected static string|UnitEnum|null $navigationGroup = 'Administration';
+
     protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationLabel = 'Audit log';
+
     protected static ?string $modelLabel = 'audit entry';
+
     protected static ?string $pluralModelLabel = 'audit log';
 
-    public static function canCreate(): bool { return false; }
-    public static function canEdit($record): bool { return false; }
-    public static function canDelete($record): bool { return false; }
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
 
     public static function infolist(Schema $schema): Schema
     {
@@ -71,7 +88,7 @@ class AuditLogResource extends Resource
                 Tables\Filters\SelectFilter::make('event')
                     ->options(fn () => AuditLog::query()->distinct()->orderBy('event')->pluck('event', 'event')->all()),
                 Tables\Filters\SelectFilter::make('user_id')->label('Person')
-                    ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all()),
+                    ->options(fn () => User::orderBy('name')->pluck('name', 'id')->all()),
                 Tables\Filters\Filter::make('period')
                     ->schema([Forms\Components\DatePicker::make('from'), Forms\Components\DatePicker::make('until')])
                     ->query(fn (Builder $query, array $data) => $query

@@ -8,7 +8,9 @@ use Filament\Widgets\Widget;
 class TankGauges extends Widget
 {
     protected static ?int $sort = 4;
+
     protected int|string|array $columnSpan = 'full';
+
     protected string $view = 'filament.widgets.tank-gauges';
 
     protected function getViewData(): array

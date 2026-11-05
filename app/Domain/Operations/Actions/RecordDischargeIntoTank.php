@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\DB;
  */
 class RecordDischargeIntoTank
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     public function __invoke(
         VesselDischarge $discharge, int $tankId, int $grossKg,

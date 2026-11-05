@@ -17,8 +17,8 @@ use App\Models\Tank;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 /** Idempotent: safe to run on every boot, and to upgrade an older demo database in place. */
 class DatabaseSeeder extends Seeder

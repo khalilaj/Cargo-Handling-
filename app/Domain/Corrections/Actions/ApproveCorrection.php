@@ -20,9 +20,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ApproveCorrection
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     public function __invoke(CorrectionRequest $request, User $by, ?string $note = null): CorrectionRequest
     {
@@ -43,7 +41,7 @@ class ApproveCorrection
             $original = CargoMovement::findOrFail($r->cargo_movement_id);
             $at = now()->max($original->occurred_at->addSecond());       // never before the thing it cancels
 
-            $reversal = $this->ledger->reverse($original, $at, 'reversal-' . $original->id);
+            $reversal = $this->ledger->reverse($original, $at, 'reversal-'.$original->id);
 
             $r->update([
                 'status' => CorrectionStatus::Approved,
