@@ -14,6 +14,15 @@ php artisan serve          # http://localhost:8000  ->  admin@cargo.test / passw
 php artisan test
 ```
 
+## What the operator sees
+
+- **Dashboard:** stock per product, an alerts panel (tanks near full / low, vessels past ETA or discharging too long, open deliveries), a 14-day inventory chart, live tank gauges and the latest movements. Everything refreshes by itself.
+- **Operations → Vessel discharges:** voyage lifecycle `scheduled → berthed → discharging → completed` (or cancelled). Pumping into a tank is only possible while *discharging*, only into a tank holding the same product, and never beyond the **bill of lading**. The page reconciles B/L vs received vs transit loss.
+- **Operations → Delivery orders:** `pending → loading → completed`. Loading is limited to the ordered quantity and to what the tank actually holds.
+- **Inventory → Tanks / Cargo movements:** per-tank page with a balance-history chart and its ledger lines. Movements stay an immutable ledger, each linked to the vessel or order that caused it.
+
+Every status change and movement goes through a domain action; Filament only calls them and shows the result.
+
 ## How the four domain rules are met
 
 | Rule | Where | How |
@@ -23,7 +32,9 @@ php artisan test
 | **Out-of-order logs** | `TankLedger::replay`, `IngestMovements` | The ledger is append-only. A tank's balance is *always* recomputed by replaying every movement sorted by `occurred_at`, so arrival order is irrelevant. A late record that would make the timeline impossible (negative stock / overflow at any point) is rejected. |
 | **Atomic operations** | `TankLedger::record` | One DB transaction with a `SELECT … FOR UPDATE` row lock on the tank, plus a unique `idempotency_key` so duplicates/retries apply once. |
 
-Layers: `app/Domain/Cargo` (enums, exceptions, services, actions — no Filament inside) →
+Operations add a second lock level with a fixed order (**vessel/order row, then tank**) so concurrent flows can never deadlock, and the B/L / order caps are enforced under that lock.
+
+Layers: `app/Domain/Cargo`, `app/Domain/Operations` (enums, exceptions, services, actions — no Filament inside) →
 `app/Filament` (thin UI that only calls the actions) → `app/Observers` (state hook: logs when a tank crosses 90%).
 
 ## Assumptions (not stated in the brief)
@@ -46,13 +57,13 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 15 pass + 2 concurrency tests skipped (SQLite can't lock rows).
-- Real concurrency (20 parallel processes racing for one tank, 12 duplicate submissions):
+- `php artisan test` — 41 pass, 4 concurrency tests skipped (SQLite cannot lock rows). Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- Real concurrency on Postgres (20 parallel processes each): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, and 12 duplicate submissions:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \
     php artisan test --filter Concurrency
   ```
-  Verified: exactly 10 of 20 fit; with the row lock removed the test fails (11 fit), proving the lock is what protects capacity.
+  Verified by negative control: with each row lock removed the matching test fails (11 pumps fit a 10-pump bill of lading; 8 loads fit a 6-load order).
 
 ## Deploy (Render)
 
