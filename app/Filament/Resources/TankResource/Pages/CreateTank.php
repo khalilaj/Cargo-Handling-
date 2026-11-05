@@ -12,6 +12,7 @@ class CreateTank extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['current_volume_kg'] = $data['opening_volume_kg'] ?? 0;
+
         return $data;
     }
 }

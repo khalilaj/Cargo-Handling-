@@ -13,6 +13,7 @@ class CreateVesselDischarge extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['status'] = DischargeStatus::Scheduled->value;
+
         return $data;
     }
 }

@@ -7,13 +7,13 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Cargo\Enums\MovementType;
 use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Corrections\Actions\RequestCorrection;
-use App\Models\User;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
-use App\Models\VesselDischarge;
 use App\Models\Tank;
+use App\Models\User;
+use App\Models\VesselDischarge;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
@@ -38,8 +38,12 @@ class ConcurrencyTest extends TestCase
     /** @param Process[] $procs */
     private function runAll(array $procs): void
     {
-        foreach ($procs as $p) { $p->start(); }
-        foreach ($procs as $p) { $p->wait(); }
+        foreach ($procs as $p) {
+            $p->start();
+        }
+        foreach ($procs as $p) {
+            $p->wait();
+        }
     }
 
     private function proc(string ...$args): Process
@@ -54,7 +58,7 @@ class ConcurrencyTest extends TestCase
 
         $procs = [];
         for ($i = 1; $i <= 20; $i++) {
-            $procs[] = $this->proc('RACE-1', 'vessel_discharge', '100000', "race-$i", '--at=2026-11-05 08:' . sprintf('%02d', $i) . ':00');
+            $procs[] = $this->proc('RACE-1', 'vessel_discharge', '100000', "race-$i", '--at=2026-11-05 08:'.sprintf('%02d', $i).':00');
         }
         $this->runAll($procs);
 

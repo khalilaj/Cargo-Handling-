@@ -9,10 +9,15 @@ use Filament\Widgets\ChartWidget;
 class InventoryTrend extends ChartWidget
 {
     protected static ?int $sort = 3;
+
     protected int|string|array $columnSpan = 1;
+
     protected ?string $heading = 'Inventory, last 14 days';
+
     protected ?string $description = 'Closing stock per product, in tonnes (rebuilt from the ledger).';
+
     protected ?string $pollingInterval = '30s';
+
     protected ?string $maxHeight = '260px';
 
     private const COLORS = ['cpo' => '#d97706', 'cpol' => '#0d9488', 'pfad' => '#7c3aed'];

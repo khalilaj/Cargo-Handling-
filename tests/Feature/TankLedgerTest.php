@@ -21,7 +21,7 @@ class TankLedgerTest extends TestCase
     private function tank(int $capacity = 1_000_000, Commodity $c = Commodity::CPOL): Tank
     {
         return Tank::create([
-            'code' => 'T-' . uniqid(), 'name' => 'Test tank', 'commodity' => $c,
+            'code' => 'T-'.uniqid(), 'name' => 'Test tank', 'commodity' => $c,
             'capacity_kg' => $capacity, 'requires_heating' => $c->requiresHeating(),
         ]);
     }

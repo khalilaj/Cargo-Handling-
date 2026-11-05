@@ -41,7 +41,7 @@ class OperationActions
         ];
 
         foreach ([DischargeStatus::Berthed, DischargeStatus::Discharging, DischargeStatus::Completed, DischargeStatus::Cancelled] as $to) {
-            $actions[] = Action::make('to_' . $to->value)
+            $actions[] = Action::make('to_'.$to->value)
                 ->label($to->actionLabel())
                 ->color($to === DischargeStatus::Cancelled ? 'danger' : 'gray')
                 ->requiresConfirmation()
@@ -77,7 +77,7 @@ class OperationActions
         ];
 
         foreach ([OrderStatus::Loading, OrderStatus::Completed, OrderStatus::Cancelled] as $to) {
-            $actions[] = Action::make('to_' . $to->value)
+            $actions[] = Action::make('to_'.$to->value)
                 ->label($to->actionLabel())
                 ->color($to === OrderStatus::Cancelled ? 'danger' : 'gray')
                 ->requiresConfirmation()
@@ -119,7 +119,7 @@ class OperationActions
                 ->helperText('Only tanks that hold this product are listed.'),
             Forms\Components\TextInput::make('quantity_kg')->label('Quantity (kg)')->numeric()->integer()
                 ->minValue(1)->maxValue($remainingKg)->required()
-                ->helperText('Remaining on ' . $limitLabel . ': ' . number_format($remainingKg) . ' kg'),
+                ->helperText('Remaining on '.$limitLabel.': '.number_format($remainingKg).' kg'),
             Forms\Components\DateTimePicker::make('occurred_at')->label('When it happened')->seconds(false)->default(now())->required(),
             Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
         ];

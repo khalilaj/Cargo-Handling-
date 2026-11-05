@@ -4,6 +4,4 @@ namespace App\Domain\Operations\Exceptions;
 
 use App\Domain\Cargo\Exceptions\CargoException;
 
-class InvalidStatusTransitionException extends CargoException
-{
-}
+class InvalidStatusTransitionException extends CargoException {}

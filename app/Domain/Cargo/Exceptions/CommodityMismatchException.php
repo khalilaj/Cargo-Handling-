@@ -2,6 +2,4 @@
 
 namespace App\Domain\Cargo\Exceptions;
 
-class CommodityMismatchException extends CargoException
-{
-}
+class CommodityMismatchException extends CargoException {}

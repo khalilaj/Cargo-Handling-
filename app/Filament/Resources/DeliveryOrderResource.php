@@ -24,11 +24,17 @@ use UnitEnum;
 class DeliveryOrderResource extends Resource
 {
     protected static ?string $model = DeliveryOrder::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
     protected static string|UnitEnum|null $navigationGroup = 'Operations';
+
     protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationLabel = 'Delivery orders';
+
     protected static ?string $modelLabel = 'delivery order';
+
     protected static ?string $recordTitleAttribute = 'order_ref';
 
     public static function form(Schema $schema): Schema
@@ -60,7 +66,7 @@ class DeliveryOrderResource extends Resource
                 TextEntry::make('delivered')->label('Delivered (kg)')
                     ->state(fn (DeliveryOrder $r) => number_format($r->deliveredKg())),
                 TextEntry::make('remaining')->label('Still to load (kg)')
-                    ->state(fn (DeliveryOrder $r) => number_format($r->remainingKg()) . " ({$r->progressPercent()}% delivered)"),
+                    ->state(fn (DeliveryOrder $r) => number_format($r->remainingKg())." ({$r->progressPercent()}% delivered)"),
             ]),
             Section::make('Timeline')->columns(3)->schema([
                 TextEntry::make('scheduled_at')->label('Scheduled')->dateTime('d M Y H:i')->placeholder('—'),
@@ -87,7 +93,7 @@ class DeliveryOrderResource extends Resource
                 Tables\Columns\TextColumn::make('ordered_kg')->label('Ordered (kg)')->numeric(),
                 Tables\Columns\TextColumn::make('delivered_kg')->label('Delivered (kg)')->numeric()->default(0),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
-                    ->state(fn (DeliveryOrder $r) => $r->progressPercent() . '%')->badge()
+                    ->state(fn (DeliveryOrder $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (DeliveryOrder $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
                 Tables\Columns\TextColumn::make('scheduled_at')->label('Scheduled')->dateTime('d M H:i')->placeholder('—')->sortable(),
             ])

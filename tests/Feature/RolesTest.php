@@ -15,6 +15,7 @@ use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\AssertionFailedError;
 use Tests\TestCase;
 
 class RolesTest extends TestCase
@@ -34,6 +35,7 @@ class RolesTest extends TestCase
 
         $u = User::where('role', $role->value)->firstOrFail();
         $this->actingAs($u);
+
         return $u;
     }
 
@@ -41,10 +43,10 @@ class RolesTest extends TestCase
     {
         $expect = [
             //                   operate approve master audit  users
-            'admin'      => [true,  true,  true,  true,  true],
+            'admin' => [true,  true,  true,  true,  true],
             'supervisor' => [true,  true,  true,  true,  false],
-            'operator'   => [true,  false, false, false, false],
-            'auditor'    => [false, false, false, true,  false],
+            'operator' => [true,  false, false, false, false],
+            'auditor' => [false, false, false, true,  false],
         ];
 
         foreach (Role::cases() as $r) {
@@ -108,7 +110,7 @@ class RolesTest extends TestCase
                     'tank_id' => Tank::where('code', 'PFAD-01')->value('id'), 'quantity_kg' => 1_000,
                     'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'sneaky',
                 ]);
-        } catch (\PHPUnit\Framework\AssertionFailedError) {
+        } catch (AssertionFailedError) {
             $refused = true;                     // Filament refuses to run an unauthorised action
         }
         $this->assertTrue($refused, 'an auditor must not be able to run the pump action');

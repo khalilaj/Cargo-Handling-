@@ -20,6 +20,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-in
 COPY . .
 RUN composer dump-autoload --optimize --no-dev \
     && php artisan filament:assets \
+    && mkdir -p storage/fonts \
     && chown -R www-data:www-data storage bootstrap/cache
 
 COPY docker/entrypoint.sh /entrypoint.sh

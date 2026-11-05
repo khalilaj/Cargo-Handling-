@@ -17,7 +17,7 @@ trait Auditable
 
         static::updated(function ($m) {
             if ($m->wasChanged('password')) {          // the fact is logged, never the value
-                AuditLog::record(Str::snake(class_basename($m)) . '.password_changed', "{$m->auditLabel()} password changed", $m);
+                AuditLog::record(Str::snake(class_basename($m)).'.password_changed', "{$m->auditLabel()} password changed", $m);
             }
 
             $changes = $m->auditableValues($m->getChanges());
@@ -34,7 +34,7 @@ trait Auditable
     /** Short human label of this record, e.g. "Tank CPO-01". */
     public function auditLabel(): string
     {
-        return Str::headline(class_basename($this)) . ' #' . $this->getKey();
+        return Str::headline(class_basename($this)).' #'.$this->getKey();
     }
 
     /** Attributes never written to the log (derived or secret). */
@@ -66,13 +66,13 @@ trait Auditable
             'created' => 'created',
             'deleted' => 'deleted',
             default => implode(', ', array_map(
-                fn ($f) => "{$f}: " . $this->auditShort($old[$f] ?? null) . ' → ' . $this->auditShort($new[$f] ?? null),
+                fn ($f) => "{$f}: ".$this->auditShort($old[$f] ?? null).' → '.$this->auditShort($new[$f] ?? null),
                 array_slice($changedFields, 0, 3),
-            )) . (count($changedFields) > 3 ? ' …' : ''),
+            )).(count($changedFields) > 3 ? ' …' : ''),
         };
 
         AuditLog::record(
-            Str::snake(class_basename($this)) . '.' . $action,
+            Str::snake(class_basename($this)).'.'.$action,
             "{$this->auditLabel()} {$summary}",
             $this,
             $old,

@@ -11,9 +11,7 @@ use Carbon\CarbonInterface;
 /** Inbound: vessel -> shore tank. The 0.5% transit loss is applied here. */
 class RecordVesselDischarge
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     public function __invoke(
         int $tankId, int $grossKg, CarbonInterface $occurredAt,

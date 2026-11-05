@@ -3,32 +3,47 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Cargo\Enums\MovementType;
-use App\Filament\Resources\CargoMovementResource\Pages;
-use App\Models\CargoMovement;
 use App\Domain\Cargo\Exceptions\CargoException;
 use App\Domain\Corrections\Actions\RequestCorrection;
 use App\Domain\Corrections\Enums\CorrectionStatus;
+use App\Filament\Resources\CargoMovementResource\Pages;
+use App\Models\CargoMovement;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class CargoMovementResource extends Resource
 {
     protected static ?string $model = CargoMovement::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
+
     protected static string|UnitEnum|null $navigationGroup = 'Inventory';
+
     protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationLabel = 'Cargo movements';
 
     /** Movements are an immutable ledger: no create/edit/delete screens. */
-    public static function canCreate(): bool { return false; }
-    public static function canEdit($record): bool { return false; }
-    public static function canDelete($record): bool { return false; }
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
 
     public static function table(Table $table): Table
     {
@@ -43,7 +58,9 @@ class CargoMovementResource extends Resource
                 Tables\Columns\TextColumn::make('occurred_at')->label('When')->dateTime('d M H:i')->sortable(),
                 Tables\Columns\TextColumn::make('type')->badge()
                     ->state(fn (CargoMovement $m) => $m->isReversal() ? 'Reversal' : ($m->type->isInbound() ? 'Discharge' : 'Delivery'))
-                    ->color(fn (string $state) => match ($state) { 'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning' }),
+                    ->color(fn (string $state) => match ($state) {
+                        'Reversal' => 'gray', 'Discharge' => 'info', default => 'warning'
+                    }),
                 Tables\Columns\TextColumn::make('tank.code')->label('Tank')->searchable(),
                 Tables\Columns\TextColumn::make('operation')->label('Operation')
                     ->state(fn (CargoMovement $m) => $m->vesselDischarge?->voyage_ref ?? $m->deliveryOrder?->order_ref ?? 'Ad hoc'),

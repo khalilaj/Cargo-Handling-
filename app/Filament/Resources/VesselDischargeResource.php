@@ -24,11 +24,17 @@ use UnitEnum;
 class VesselDischargeResource extends Resource
 {
     protected static ?string $model = VesselDischarge::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-on-square-stack';
+
     protected static string|UnitEnum|null $navigationGroup = 'Operations';
+
     protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'Vessel discharges';
+
     protected static ?string $modelLabel = 'vessel discharge';
+
     protected static ?string $recordTitleAttribute = 'voyage_ref';
 
     public static function form(Schema $schema): Schema
@@ -62,7 +68,7 @@ class VesselDischargeResource extends Resource
                 TextEntry::make('loss')->label('Transit loss (kg)')
                     ->state(fn (VesselDischarge $r) => number_format($r->transitLossKg())),
                 TextEntry::make('remaining')->label('Still to discharge (kg)')
-                    ->state(fn (VesselDischarge $r) => number_format($r->remainingKg()) . " ({$r->progressPercent()}% received)"),
+                    ->state(fn (VesselDischarge $r) => number_format($r->remainingKg())." ({$r->progressPercent()}% received)"),
             ]),
             Section::make('Timeline')->columns(4)->schema([
                 TextEntry::make('eta')->label('ETA')->dateTime('d M Y H:i')->placeholder('—'),
@@ -90,7 +96,7 @@ class VesselDischargeResource extends Resource
                 Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric(),
                 Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
-                    ->state(fn (VesselDischarge $r) => $r->progressPercent() . '%')->badge()
+                    ->state(fn (VesselDischarge $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (VesselDischarge $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
                 Tables\Columns\TextColumn::make('eta')->label('ETA')->dateTime('d M H:i')->placeholder('—')->sortable(),
             ])

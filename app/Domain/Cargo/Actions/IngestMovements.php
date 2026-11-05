@@ -16,9 +16,7 @@ use Illuminate\Support\Carbon;
  */
 class IngestMovements
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     /** @param array<int, array<string, mixed>> $records */
     public function __invoke(array $records): array

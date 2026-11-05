@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Domain\Cargo\Enums\MovementType;
 use App\Domain\Audit\Auditable;
+use App\Domain\Cargo\Enums\MovementType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +21,7 @@ class CargoMovement extends Model
             default => 'movement',
         };
 
-        return "Movement #{$this->getKey()} ({$kind}, " . number_format((int) $this->net_kg) . ' kg net)';
+        return "Movement #{$this->getKey()} ({$kind}, ".number_format((int) $this->net_kg).' kg net)';
     }
 
     protected $fillable = [

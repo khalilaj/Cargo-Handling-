@@ -11,9 +11,7 @@ use Carbon\CarbonInterface;
 /** Outbound: storage tank -> truck. */
 class RecordTruckDelivery
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     public function __invoke(
         int $tankId, int $grossKg, CarbonInterface $occurredAt,

@@ -23,7 +23,7 @@ class RequestCorrection
 
         $reason = trim($reason);
         if (mb_strlen($reason) < self::MIN_REASON_LENGTH) {
-            throw new InvalidCorrectionException('Please explain the correction (at least ' . self::MIN_REASON_LENGTH . ' characters).');
+            throw new InvalidCorrectionException('Please explain the correction (at least '.self::MIN_REASON_LENGTH.' characters).');
         }
 
         return DB::transaction(function () use ($movement, $by, $reason) {

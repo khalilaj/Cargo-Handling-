@@ -14,9 +14,7 @@ use Illuminate\Support\Facades\DB;
 /** Load part of a delivery order from a tank onto a truck. Lock order: order -> tank. */
 class RecordTruckLoad
 {
-    public function __construct(private TankLedger $ledger)
-    {
-    }
+    public function __construct(private TankLedger $ledger) {}
 
     public function __invoke(
         DeliveryOrder $order, int $tankId, int $kg, CarbonInterface $occurredAt,
@@ -45,7 +43,7 @@ class RecordTruckLoad
 
             return $this->ledger->record(
                 $tankId, MovementType::TruckDelivery, $kg, $occurredAt, $idempotencyKey,
-                trim($o->order_ref . ($truck ? " · {$truck}" : '')), $o->commodity,
+                trim($o->order_ref.($truck ? " · {$truck}" : '')), $o->commodity,
                 ['delivery_order_id' => $o->id],
             );
         });

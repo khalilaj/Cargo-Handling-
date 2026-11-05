@@ -2,15 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Domain\Cargo\Exceptions\CargoException;
 use App\Domain\Corrections\Actions\ApproveCorrection;
 use App\Domain\Corrections\Actions\RejectCorrection;
 use App\Domain\Corrections\Enums\CorrectionStatus;
-use App\Domain\Cargo\Exceptions\CargoException;
 use App\Filament\Resources\CorrectionRequestResource\Pages;
 use App\Models\CorrectionRequest;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -25,15 +24,31 @@ use UnitEnum;
 class CorrectionRequestResource extends Resource
 {
     protected static ?string $model = CorrectionRequest::class;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrow-uturn-left';
+
     protected static string|UnitEnum|null $navigationGroup = 'Operations';
+
     protected static ?int $navigationSort = 3;
+
     protected static ?string $navigationLabel = 'Corrections';
+
     protected static ?string $modelLabel = 'correction request';
 
-    public static function canCreate(): bool { return false; }
-    public static function canEdit($record): bool { return false; }
-    public static function canDelete($record): bool { return false; }
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -87,7 +102,7 @@ class CorrectionRequestResource extends Resource
                     ->formatStateUsing(fn (CorrectionStatus $state) => $state->label())
                     ->color(fn (CorrectionStatus $state) => $state->color()),
                 Tables\Columns\TextColumn::make('movement')->label('Movement')
-                    ->state(fn (CorrectionRequest $r) => "#{$r->cargo_movement_id} · {$r->movement->tank->code} · " . number_format($r->movement->net_kg) . ' kg')
+                    ->state(fn (CorrectionRequest $r) => "#{$r->cargo_movement_id} · {$r->movement->tank->code} · ".number_format($r->movement->net_kg).' kg')
                     ->description(fn (CorrectionRequest $r) => $r->movement->reference),
                 Tables\Columns\TextColumn::make('reason')->limit(40)->tooltip(fn (CorrectionRequest $r) => $r->reason),
                 Tables\Columns\TextColumn::make('requester.name')->label('By')->description(fn (CorrectionRequest $r) => $r->created_at->format('d M H:i')),

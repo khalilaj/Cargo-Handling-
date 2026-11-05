@@ -33,7 +33,7 @@ class PanelPagesTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
-        $this->actingAs(User::where("role", "admin")->first());
+        $this->actingAs(User::where('role', 'admin')->first());
     }
 
     public function test_every_screen_loads(): void

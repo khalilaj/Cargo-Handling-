@@ -2,9 +2,9 @@
 
 namespace App\Domain\Operations\Services;
 
+use App\Domain\Corrections\Enums\CorrectionStatus;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
-use App\Domain\Corrections\Enums\CorrectionStatus;
 use App\Models\CorrectionRequest;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
@@ -20,6 +20,7 @@ use Illuminate\Support\Collection;
 class OperationalAlerts
 {
     public const NEAR_FULL_PERCENT = 90.0;
+
     public const LOW_STOCK_PERCENT = 10.0;
 
     /** @return Collection<int, array{level: string, title: string, detail: string}> */
@@ -68,7 +69,7 @@ class OperationalAlerts
                 $long = $d->started_at && $d->started_at->lt(now()->subHours(48));
                 $out[] = [
                     'level' => $long ? 'warning' : 'info',
-                    'title' => "{$d->vessel_name} discharging" . ($long ? ' for over 48 h' : ''),
+                    'title' => "{$d->vessel_name} discharging".($long ? ' for over 48 h' : ''),
                     'detail' => "{$d->voyage_ref}: {$left} t left on the bill of lading ({$d->progressPercent()}% received).",
                 ];
             }
@@ -83,7 +84,7 @@ class OperationalAlerts
 
         return $n === 0 ? [] : [[
             'level' => 'warning',
-            'title' => "{$n} correction request" . ($n === 1 ? '' : 's') . ' awaiting approval',
+            'title' => "{$n} correction request".($n === 1 ? '' : 's').' awaiting approval',
             'detail' => 'A supervisor must approve or reject them (Operations → Corrections).',
         ]];
     }
