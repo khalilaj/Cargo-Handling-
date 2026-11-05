@@ -100,7 +100,12 @@ class OperationActions
      */
     private static function refreshingRecord(array $actions): array
     {
-        return array_map(fn (Action $a) => $a->after(fn ($record) => $record->refresh()), $actions);
+        return array_map(
+            fn (Action $a) => $a
+                ->authorize(fn () => auth()->user()?->role->canOperate() ?? false)   // hidden AND blocked for read-only roles
+                ->after(fn ($record) => $record->refresh()),
+            $actions,
+        );
     }
 
     private static function movementForm($commodity, int $remainingKg, string $limitLabel): array

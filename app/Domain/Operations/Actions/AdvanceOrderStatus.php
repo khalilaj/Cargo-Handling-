@@ -22,7 +22,7 @@ class AdvanceOrderStatus
                 );
             }
 
-            $hasLoads = $o->movements()->exists();
+            $hasLoads = $o->deliveredKg() > 0;   // net of any reversed movements
 
             if ($to === OrderStatus::Completed && ! $hasLoads) {
                 throw new OperationIncompleteException(

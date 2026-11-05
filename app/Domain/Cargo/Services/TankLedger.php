@@ -6,6 +6,7 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Cargo\Enums\MovementType;
 use App\Domain\Cargo\Exceptions\CommodityMismatchException;
 use App\Domain\Cargo\Exceptions\InsufficientStockException;
+use App\Domain\Cargo\Exceptions\MovementNotReversibleException;
 use App\Domain\Cargo\Exceptions\TankCapacityExceededException;
 use App\Models\CargoMovement;
 use App\Models\Tank;
@@ -84,6 +85,48 @@ class TankLedger
             // Lost a race on the same idempotency key: the other request won.
             return CargoMovement::where('idempotency_key', $idempotencyKey)->firstOrFail();
         }
+    }
+
+    /**
+     * Cancel a movement by appending its mirror image. The ledger itself is never edited.
+     * The reversal copies gross / loss / net exactly (no fresh 0.5% loss) and flips the direction,
+     * so replay, operation totals and the tank balance all stay consistent.
+     * Fails, changing nothing, if the tank could not legally hold the result.
+     */
+    public function reverse(CargoMovement $original, CarbonInterface $occurredAt, string $idempotencyKey): CargoMovement
+    {
+        return DB::transaction(function () use ($original, $occurredAt, $idempotencyKey) {
+            $tank = Tank::query()->lockForUpdate()->findOrFail($original->tank_id);
+
+            if ($existing = CargoMovement::where('idempotency_key', $idempotencyKey)->first()) {
+                return $existing;
+            }
+            if ($original->isReversal()) {
+                throw new MovementNotReversibleException('A reversal cannot itself be reversed.');
+            }
+            if (CargoMovement::where('reverses_movement_id', $original->id)->exists()) {
+                throw new MovementNotReversibleException("Movement #{$original->id} has already been reversed.");
+            }
+
+            $movement = CargoMovement::create([
+                'tank_id' => $tank->id,
+                'type' => $original->type->isInbound() ? MovementType::TruckDelivery : MovementType::VesselDischarge,
+                'reference' => "Reversal of #{$original->id}",
+                'gross_kg' => $original->gross_kg,
+                'loss_kg' => $original->loss_kg,
+                'net_kg' => $original->net_kg,
+                'occurred_at' => $occurredAt,
+                'idempotency_key' => $idempotencyKey,
+                'vessel_discharge_id' => $original->vessel_discharge_id,
+                'delivery_order_id' => $original->delivery_order_id,
+                'reverses_movement_id' => $original->id,
+            ]);
+
+            $tank->current_volume_kg = $this->replay($tank);   // throws if the timeline would break
+            $tank->save();
+
+            return $movement;
+        });
     }
 
     /**

@@ -22,7 +22,7 @@ class StockOverview extends StatsOverviewWidget
             $stats[] = Stat::make(strtoupper($c->value) . ' in storage', number_format($stock / 1000, 1) . ' t')
                 ->description('of ' . number_format($cap / 1000, 1) . ' t capacity');
         }
-        $stats[] = Stat::make('Transit loss to date', number_format(CargoMovement::sum('loss_kg') / 1000, 2) . ' t')
+        $stats[] = Stat::make('Transit loss to date', number_format((int) CargoMovement::sum(\Illuminate\Support\Facades\DB::raw('CASE WHEN reverses_movement_id IS NULL THEN loss_kg ELSE -loss_kg END')) / 1000, 2) . ' t')
             ->description('0.5% of every vessel discharge')->color('danger');
 
         return $stats;
