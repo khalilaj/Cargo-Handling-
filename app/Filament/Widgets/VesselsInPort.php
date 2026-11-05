@@ -11,7 +11,7 @@ use Filament\Widgets\TableWidget;
 
 class VesselsInPort extends TableWidget
 {
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 3;
 
     protected static ?string $heading = 'Vessels in port';
 

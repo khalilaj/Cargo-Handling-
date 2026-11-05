@@ -8,12 +8,12 @@ class TransporterPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->role->canViewRegisters();
     }
 
     public function view(User $user, $model = null): bool
     {
-        return true;
+        return $user->role->canViewRegisters();
     }
 
     public function create(User $user): bool

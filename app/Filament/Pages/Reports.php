@@ -27,6 +27,11 @@ class Reports extends Page
 
     protected string $view = 'filament.pages.reports';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->role->canViewReports() ?? false;
+    }
+
     public string $from = '';
 
     public string $until = '';

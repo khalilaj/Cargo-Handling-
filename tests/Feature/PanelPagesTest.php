@@ -9,13 +9,13 @@ use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ViewDeliveryOrder;
 use App\Filament\Resources\VesselDischargeResource\Pages\ListVesselDischarges;
 use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
-use App\Filament\Widgets\AlertsPanel;
 use App\Filament\Widgets\InventoryTrend;
 use App\Filament\Widgets\RecentMovements;
 use App\Filament\Widgets\StockOverview;
 use App\Filament\Widgets\TankGauges;
 use App\Filament\Widgets\TrucksOnSite;
 use App\Filament\Widgets\VesselsInPort;
+use App\Livewire\AlertsBell;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
@@ -59,7 +59,7 @@ class PanelPagesTest extends TestCase
     public function test_dashboard_widgets_render_real_data(): void
     {
         Livewire::test(TankGauges::class)->assertSee('CPO-01')->assertSee('PFAD-01')->assertSee('free');
-        Livewire::test(AlertsPanel::class)->assertSee('Needs attention')->assertSee('MV Borneo Trader');
+        Livewire::test(AlertsBell::class)->assertSee('Needs attention')->assertSee('MV Borneo Trader');
         Livewire::test(RecentMovements::class)->assertSee('ORD-1002');
         Livewire::test(VesselsInPort::class)->assertSee('MV Borneo Trader')->assertSee('MV Kenya Star')->assertSee('B1')->assertSee('85%')->assertDontSee('MV Pacific Dawn');
         Livewire::test(TrucksOnSite::class)->assertSee('KCD 452M')->assertSee('KCB 887L')->assertSee('KDA 999Z')->assertSee('Joseph Kamau');
@@ -70,10 +70,10 @@ class PanelPagesTest extends TestCase
     public function test_alerts_flag_near_full_and_overdue_items(): void
     {
         $t = Tank::where('code', 'PFAD-01')->first();      // 1.7M of 2M = 84.6%
-        $this->assertStringNotContainsString('nearly full', (string) Livewire::test(AlertsPanel::class)->html());
+        $this->assertStringNotContainsString('nearly full', (string) Livewire::test(AlertsBell::class)->html());
 
         $t->update(['current_volume_kg' => 1_900_000]);       // 95%
-        Livewire::test(AlertsPanel::class)->assertSee('PFAD-01 nearly full');
+        Livewire::test(AlertsBell::class)->assertSee('PFAD-01 nearly full');
     }
 
     public function test_operator_can_run_a_vessel_through_the_buttons(): void

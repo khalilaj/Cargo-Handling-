@@ -4,17 +4,17 @@ namespace App\Policies;
 
 use App\Models\User;
 
-/** Everyone can see requests. Creating and deciding go through domain actions that check roles themselves. */
+/** Approvers and auditors see the queue. Creating and deciding go through domain actions that check roles themselves. */
 class CorrectionRequestPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->role->canViewCorrections();
     }
 
     public function view(User $user, $model = null): bool
     {
-        return true;
+        return $user->role->canViewCorrections();
     }
 
     public function create(User $user): bool

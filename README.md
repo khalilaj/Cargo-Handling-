@@ -16,7 +16,8 @@ php artisan test
 
 ## What the operator sees
 
-- **Dashboard:** stock per product, an alerts panel (tanks near full / low, vessels past ETA or discharging too long, open deliveries), a 14-day inventory chart, live tank gauges and the latest movements. Everything refreshes by itself.
+- **Dashboard:** stock per product, live tank gauges, *Vessels in port* and *Trucks on site* boards, and (for managers and auditors) a 14-day inventory chart and the latest movements. It refreshes by itself.
+- **The bell (top bar):** what needs *your* attention right now, each item linked to the right screen, with a count badge. Only things the person can act on are listed (tanks near full or low, ships late, trucks on site with warnings, overstays; approvers also see corrections awaiting approval, and managers see documents to chase). Normal progress is not an alert.
 - **Operations → Vessel discharges:** voyage lifecycle `scheduled → berthed → discharging → completed` (or cancelled). Pumping into a tank is only possible while *discharging*, only into a tank holding the same product, and never beyond the **bill of lading**. The page reconciles B/L vs received vs transit loss.
 - **Operations → Delivery orders:** `pending → loading → completed`. Loading is limited to the ordered quantity and to what the tank actually holds.
 - **Inventory → Tanks / Cargo movements:** per-tank page with a balance-history chart and its ledger lines. Movements stay an immutable ledger, each linked to the vessel or order that caused it.
@@ -32,14 +33,18 @@ php artisan test
 
 Every status change and movement goes through a domain action; Filament only calls them and shows the result.
 
-### Roles
+### Roles: a simpler product for each person
 
-| Role | Can do |
-| --- | --- |
-| **Admin** | everything, including users |
-| **Supervisor** | operate, schedule vessels / orders, edit tanks, approve or reject corrections, read the audit log |
-| **Operator** | operate (record movements, advance vessels and orders), *request* corrections |
-| **Auditor** | read-only everywhere, plus the audit log |
+Each role gets only the screens it needs. The same rules hide the menu item **and** refuse the direct URL.
+
+| Role | Menu | Can do |
+| --- | --- | --- |
+| **Operator** | Operations (vessels, orders, truck visits), Stock (tanks, movements): 6 items | record movements, advance vessels and orders, gate trucks, *request* corrections. Live dashboard boards and the bell |
+| **Supervisor** | the above + Corrections, Terminal reports, Registers (collapsed), Audit log: 15 items | everything an operator does, plus schedule vessels and orders, edit tanks and registers, approve or reject corrections |
+| **Auditor** | Operations and Stock (read-only), Corrections, Terminal reports, Audit log: 9 items | observe only; no action buttons, no bell |
+| **Admin** | everything, including Users & roles: 16 items | everything |
+
+The menu is grouped Operations, Stock, Reports, Registers and Administration; the last two start collapsed.
 
 Enforced in three places: Laravel policies (screens), action authorisation (buttons), and the domain actions themselves for approvals (role and four-eyes checks cannot be bypassed from another entry point). Operational data can never be deleted.
 
@@ -83,7 +88,7 @@ Records may be in any order; each gets `applied` or `rejected` (with reason). Re
 
 ## Tests
 
-- `php artisan test` — 159 pass, 8 concurrency tests skipped on SQLite (it cannot lock rows). On PostgreSQL all **167 pass** with nothing skipped. Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
+- `php artisan test` — 171 pass, 8 concurrency tests skipped on SQLite (it cannot lock rows). On PostgreSQL all **179 pass** with nothing skipped. Covers the four rules, both lifecycles, every Filament screen, and the real buttons through Filament's test helpers.
 - Real concurrency on Postgres (parallel processes; the CI job runs these too): a tank that fits 10 discharges, a bill of lading that fits 10 pumps, an order that fits 6 loads, 12 duplicate submissions, two supervisors approving the same correction at once, twelve gates admitting one truck, loads racing for one truck's payload, and two ships racing for one berth:
   ```bash
   DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=cargo_test DB_USERNAME=postgres DB_PASSWORD=... \

@@ -187,9 +187,12 @@ class ReportsTest extends TestCase
 
     // ---- screens -----------------------------------------------------------------
 
-    public function test_every_role_can_open_the_reports_and_sees_the_numbers(): void
+    public function test_reports_are_for_managers_and_auditors_not_operators(): void
     {
-        foreach (Role::cases() as $role) {
+        $this->login(Role::Operator);
+        $this->get('/admin/reports')->assertForbidden();
+
+        foreach ([Role::Auditor, Role::Supervisor, Role::Admin] as $role) {
             $this->login($role);
             $this->get('/admin/reports')->assertOk();
         }
@@ -208,7 +211,7 @@ class ReportsTest extends TestCase
         [$f, $u] = ReportPdfController::period('not a date', '???');
         $this->assertTrue($f->lt($u));                                                 // fell back to the last 30 days
 
-        $this->login(Role::Operator);
+        $this->login(Role::Supervisor);
         Livewire::test(Reports::class)->set('from', 'garbage')->set('until', '')->assertOk();
     }
 
@@ -216,7 +219,7 @@ class ReportsTest extends TestCase
     {
         $this->get('/reports/pdf')->assertRedirect('/admin/login');
 
-        foreach ([Role::Auditor, Role::Operator] as $role) {
+        foreach ([Role::Auditor, Role::Supervisor] as $role) {
             $this->login($role);
             $res = $this->get('/reports/pdf?from=2026-11-01&until=2026-11-30');
             $res->assertOk();
@@ -224,5 +227,12 @@ class ReportsTest extends TestCase
             $this->assertStringContainsString('terminal-report-2026-11-01_2026-11-30.pdf', (string) $res->headers->get('Content-Disposition'));
             $this->assertStringStartsWith('%PDF', (string) $res->getContent());
         }
+    }
+
+    public function test_the_pdf_is_refused_to_operators(): void
+    {
+        $this->login(Role::Operator);
+
+        $this->get('/reports/pdf?from=2026-11-01&until=2026-11-30')->assertForbidden();
     }
 }

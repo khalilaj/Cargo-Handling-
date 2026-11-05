@@ -9,7 +9,7 @@ use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
 use App\Filament\Resources\TruckVisitResource\Pages\ListTruckVisits;
 use App\Filament\Resources\TruckVisitResource\Pages\ViewTruckVisit;
-use App\Filament\Widgets\AlertsPanel;
+use App\Livewire\AlertsBell;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
 use App\Models\Driver;
@@ -193,14 +193,18 @@ class TruckVisitUiTest extends TestCase
             ->removeTableFilter('on_site')->assertSee($left->truck->plate);
     }
 
-    public function test_the_dashboard_alerts_cover_trucks_and_documents(): void
+    public function test_the_bell_tells_each_role_what_it_can_act_on(): void
     {
         $this->login(Role::Operator);
-
-        Livewire::test(AlertsPanel::class)
+        Livewire::test(AlertsBell::class)
             ->assertSee('KDA 999Z on site with warnings')                              // no document dates recorded
             ->assertSee('KCB 887L on site with warnings')                              // inspection expiring + driver licence expiring
-            ->assertSee('Documents to chase: 2 trucks and 2 drivers');                 // trucks KDA 214X (expired), KCB 887L (soon); drivers Mary (soon), Peter (expired)
+            ->assertDontSee('Documents to chase');                                     // a registers task: not the operator's
+
+        $this->login(Role::Supervisor);
+        Livewire::test(AlertsBell::class)
+            ->assertSee('KDA 999Z on site with warnings')
+            ->assertSee('Documents to chase: 2 trucks and 2 drivers');                // trucks KDA 214X (expired), KCB 887L (soon); drivers Mary (soon), Peter (expired)
     }
 
     public function test_a_truck_that_overstays_is_flagged(): void
@@ -209,6 +213,6 @@ class TruckVisitUiTest extends TestCase
         $v = TruckVisit::where('status', VisitStatus::WeighedIn->value)->first();
         $v->forceFill(['gate_in_at' => now()->subHours(13)])->saveQuietly();
 
-        Livewire::test(AlertsPanel::class)->assertSee('KDA 999Z on site for over 12 h');
+        Livewire::test(AlertsBell::class)->assertSee('KDA 999Z on site for over 12 h');
     }
 }

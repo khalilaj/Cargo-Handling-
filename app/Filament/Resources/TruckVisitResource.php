@@ -63,7 +63,7 @@ class TruckVisitResource extends Resource
                 TextEntry::make('ref')->label('Visit'),
                 TextEntry::make('status')->badge()->formatStateUsing(fn (VisitStatus $state) => $state->label())->color(fn (VisitStatus $state) => $state->color()),
                 TextEntry::make('truck.plate')->label('Truck')
-                    ->url(fn (TruckVisit $record) => TruckResource::getUrl('view', ['record' => $record->truck_id])),
+                    ->url(fn (TruckVisit $record) => auth()->user()?->can('view', $record->truck) ? TruckResource::getUrl('view', ['record' => $record->truck_id]) : null),
                 TextEntry::make('driver.name')->label('Driver')->placeholder('Not recorded'),
                 TextEntry::make('order.order_ref')->label('Order')
                     ->url(fn (TruckVisit $record) => DeliveryOrderResource::getUrl('view', ['record' => $record->delivery_order_id])),

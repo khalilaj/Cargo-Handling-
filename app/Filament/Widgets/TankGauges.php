@@ -7,7 +7,7 @@ use Filament\Widgets\Widget;
 
 class TankGauges extends Widget
 {
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';
 

@@ -11,7 +11,7 @@ use Filament\Widgets\TableWidget;
 
 class TrucksOnSite extends TableWidget
 {
-    protected static ?int $sort = 6;
+    protected static ?int $sort = 4;
 
     protected static ?string $heading = 'Trucks on site';
 
