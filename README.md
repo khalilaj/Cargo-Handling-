@@ -119,3 +119,7 @@ The migrations are additive. Voyages and orders created before the registers exi
 4. Open the service URL → `/admin`, log in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 
 Production uses **Postgres** because the locking guarantee needs a real database server.
+
+## Branding
+
+The interface follows the Bulkstream identity: logo from the assessment brief (`public/images/bulkstream-logo*.png`), ink `#153037` / `#1B2F36`, paper `#F0EFEA`, Montserrat for headings and Mulish for text (closest free match to the website's geometric sans). Colours and fonts are set in `app/Providers/Filament/AdminPanelProvider.php` and `public/css/bulkstream.css`; change them there. PDF reports use the logo and ink colours with the built-in DejaVu font.

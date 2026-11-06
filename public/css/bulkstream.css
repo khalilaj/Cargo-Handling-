@@ -1,0 +1,38 @@
+/* Bulkstream brand layer. Colours sampled from the Bulkstream logo and website:
+   ink  #153037 (logo)  /  #1B2F36 (site header)  /  paper #F0EFEA (site light sections)
+   Fonts: Montserrat for headings and numbers, Mulish for text (closest free match to the site's geometric sans). */
+:root {
+    --bs-ink: #153037;
+    --bs-ink-2: #1b2f36;
+    --bs-steel: #58686c;
+    --bs-paper: #f0efea;
+    --bs-line: #dcdad2;
+    --bs-heading: 'Montserrat', 'Mulish', system-ui, sans-serif;
+}
+
+h1, h2, h3,
+.fi-header-heading,
+.fi-simple-header-heading,
+.fi-section-header-heading,
+.fi-wi-stats-overview-stat-value,
+.fi-sidebar-group-label {
+    font-family: var(--bs-heading) !important;
+    letter-spacing: -0.01em;
+}
+.fi-header-heading, .fi-simple-header-heading { font-weight: 700 !important; }
+.fi-wi-stats-overview-stat-value { font-weight: 700 !important; }
+
+/* Light mode: the site's warm paper background with white cards */
+html:not(.dark) body.fi-body, html:not(.dark) .fi-body { background-color: var(--bs-paper); }
+html:not(.dark) .fi-topbar > nav, html:not(.dark) .fi-sidebar-header { background-color: #fff; }
+html:not(.dark) .fi-sidebar { background-color: #fff; }
+
+/* Sign-in page: deep Bulkstream ink behind a white card, wordmark over it */
+html:not(.dark) .fi-simple-layout { background: radial-gradient(1200px 600px at 20% 0%, #26444d 0%, var(--bs-ink-2) 55%, var(--bs-ink) 100%); }
+.fi-simple-layout .fi-simple-main { border-radius: 14px; }
+.bs-login-tag { text-align: center; margin: -6px 0 14px; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--bs-steel); }
+.bs-login-foot { text-align: center; margin-top: 18px; font-size: .75rem; color: rgba(255,255,255,.65); }
+
+/* The bell, badges and links read well in ink */
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn { background-color: rgba(21,48,55,.08); }
+.fi-simple-layout .fi-logo { height: 2.75rem !important; }
