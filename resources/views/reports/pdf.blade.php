@@ -5,19 +5,21 @@
 <title>Terminal report</title>
 <style>
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1f2937; }
-    h1 { font-size: 18px; margin: 0 0 2px; }
-    h2 { font-size: 13px; margin: 18px 0 6px; border-bottom: 2px solid #0d9488; padding-bottom: 3px; }
+    h1 { font-size: 18px; margin: 6px 0 2px; color: #153037; }
+    .brand { border-bottom: 3px solid #153037; padding-bottom: 8px; margin-bottom: 8px; }
+    h2 { font-size: 13px; margin: 18px 0 6px; border-bottom: 2px solid #153037; padding-bottom: 3px; }
     .meta { color: #6b7280; margin-bottom: 8px; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f0fdfa; text-align: left; padding: 5px 6px; border-bottom: 1px solid #99f6e4; }
+    th { background: #f0efea; text-align: left; padding: 5px 6px; border-bottom: 1px solid #dcdad2; }
     td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; }
     .n { text-align: right; }
-    .total td { font-weight: bold; border-top: 2px solid #0d9488; }
+    .total td { font-weight: bold; border-top: 2px solid #153037; }
     .ok { color: #047857; } .bad { color: #b91c1c; }
     .note { color: #6b7280; font-size: 9px; margin-top: 4px; }
 </style>
 </head>
 <body>
+<div class="brand"><img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/bulkstream-logo.png'))) }}" style="height:26px"></div>
 <h1>Cargo Handling: terminal report</h1>
 <div class="meta">Period {{ $from->format('d M Y') }} to {{ $until->format('d M Y') }} · generated {{ now()->format('d M Y H:i') }} by {{ $generatedBy }}</div>
 
