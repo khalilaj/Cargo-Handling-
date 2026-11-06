@@ -12,11 +12,13 @@ use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\Berth;
 use App\Models\CargoMovement;
+use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use App\Models\Tank;
 use App\Models\Truck;
 use App\Models\TruckVisit;
 use App\Models\User;
+use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Symfony\Component\Process\Process;
@@ -208,5 +210,29 @@ class ConcurrencyTest extends TestCase
 
         $this->assertSame(1, $berthed, 'only one ship can be alongside');
         $this->assertSame(1, VesselDischarge::where('berth_id', $berth->id)->count());
+    }
+
+    /** @return list<string> the codes printed by 12 processes that each create one record at the same moment */
+    private function createInParallel(string $kind): array
+    {
+        $procs = array_map(fn () => new Process([PHP_BINARY, 'artisan', 'cargo:new', $kind], base_path(), null, null, 60), range(1, 12));
+        $this->runAll($procs);
+
+        foreach ($procs as $p) {
+            $this->assertSame(0, $p->getExitCode(), "creating a {$kind} failed: ".$p->getErrorOutput().$p->getOutput());
+        }
+
+        return array_map(fn (Process $p) => trim($p->getOutput()), $procs);
+    }
+
+    public function test_parallel_creations_are_each_given_their_own_number(): void
+    {
+        Vessel::create(['name' => 'MV Parallel', 'active' => true]);
+        Customer::create(['name' => 'Parallel Ltd', 'active' => true]);
+
+        foreach (['voyage', 'order', 'tank', 'berth'] as $kind) {
+            $codes = $this->createInParallel($kind);
+            $this->assertCount(12, array_unique($codes), "{$kind} numbers must all differ: ".implode(', ', $codes));
+        }
     }
 }
