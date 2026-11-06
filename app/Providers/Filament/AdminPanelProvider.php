@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Support\InitialsAvatarProvider;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -34,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/bulkstream-logo.png'))
             ->darkModeBrandLogo(asset('images/bulkstream-logo-white.png'))
             ->brandLogoHeight('2rem')
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->favicon(asset('images/favicon.png'))
             ->font('Mulish', provider: GoogleFontProvider::class)
             ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="'.e(asset('css/bulkstream.css')).'?v=1">')
