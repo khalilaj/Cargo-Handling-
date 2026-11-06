@@ -41,7 +41,7 @@ class VesselDischargeResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Forms\Components\TextInput::make('voyage_ref')->label('Voyage reference')->required()->unique(ignoreRecord: true)->maxLength(40),
+            Forms\Components\TextInput::make('voyage_ref')->label('Voyage reference')->disabled()->dehydrated(false)->placeholder('Generated automatically'),
             Forms\Components\Select::make('vessel_id')->label('Vessel')->required()->searchable()
                 ->options(fn () => Vessel::where('active', true)->orderBy('name')->get()->mapWithKeys(fn (Vessel $v) => [$v->id => $v->name.($v->imo ? " (IMO {$v->imo})" : '')]))
                 ->helperText('Pick from the vessel register (Registers → Vessels).'),

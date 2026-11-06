@@ -41,7 +41,7 @@ class DeliveryOrderResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Forms\Components\TextInput::make('order_ref')->label('Order reference')->required()->unique(ignoreRecord: true)->maxLength(40),
+            Forms\Components\TextInput::make('order_ref')->label('Order reference')->disabled()->dehydrated(false)->placeholder('Generated automatically'),
             Forms\Components\Select::make('customer_id')->label('Customer')->required()->searchable()
                 ->options(fn () => Customer::where('active', true)->orderBy('name')->pluck('name', 'id'))
                 ->helperText('Pick from the customer register (Registers → Customers).'),

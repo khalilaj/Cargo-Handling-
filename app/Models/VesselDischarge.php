@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Audit\Auditable;
 use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\DischargeStatus;
+use App\Domain\Operations\Services\CodeGenerator;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,10 @@ class VesselDischarge extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $d) {
+            $d->voyage_ref = filled($d->voyage_ref) ? $d->voyage_ref : app(CodeGenerator::class)->voyage();
+        });
+
         // The register is the source of truth; the name copy follows it.
         static::saving(function (self $d) {
             // Derived, never typed: the guard columns hold the ids only while the ship is alongside.
