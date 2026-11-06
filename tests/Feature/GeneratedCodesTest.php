@@ -108,4 +108,21 @@ class GeneratedCodesTest extends TestCase
 
         $this->assertNull(DeliveryOrder::where('order_ref', 'MY-OWN')->first());
     }
+
+    public function test_two_people_numbering_at_the_same_moment_get_different_numbers(): void
+    {
+        $this->seedDemo();
+        $g = app(CodeGenerator::class);
+
+        // Neither record is saved yet when the second number is asked for: this is the race.
+        $first = $g->order();
+        $second = $g->order();
+        $this->assertNotSame($first, $second);
+        $this->assertSame('ORD-1005', $first);
+        $this->assertSame('ORD-1006', $second);
+
+        $this->assertNotSame($g->voyage(), $g->voyage());
+        $this->assertNotSame($g->tank(Commodity::CPO), $g->tank(Commodity::CPO));
+        $this->assertNotSame($g->berth(), $g->berth());
+    }
 }
