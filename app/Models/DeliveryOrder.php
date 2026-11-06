@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Audit\Auditable;
 use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\OrderStatus;
+use App\Domain\Operations\Services\CodeGenerator;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,10 @@ class DeliveryOrder extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $o) {
+            $o->order_ref = filled($o->order_ref) ? $o->order_ref : app(CodeGenerator::class)->order();
+        });
+
         static::saving(function (self $o) {
             if ($o->customer_id && ($o->isDirty('customer_id') || blank($o->customer))) {
                 $o->customer = Customer::find($o->customer_id)?->name ?? $o->customer;

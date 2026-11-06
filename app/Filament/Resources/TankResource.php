@@ -36,7 +36,7 @@ class TankResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Forms\Components\TextInput::make('code')->required()->unique(ignoreRecord: true)->maxLength(20),
+            Forms\Components\TextInput::make('code')->label('Tank code')->disabled()->dehydrated(false)->placeholder('Generated automatically')->helperText('Made from the product and the next free number, for example CPO-03.'),
             Forms\Components\TextInput::make('name')->required(),
             Forms\Components\Select::make('commodity')
                 ->options(collect(Commodity::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()]))

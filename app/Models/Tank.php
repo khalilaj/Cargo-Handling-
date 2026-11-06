@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Audit\Auditable;
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Operations\Services\CodeGenerator;
 use App\Observers\TankObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Tank extends Model
 {
     use Auditable;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $t) {
+            $t->code = filled($t->code) ? $t->code : app(CodeGenerator::class)->tank($t->commodity);
+        });
+    }
 
     protected $fillable = [
         'code', 'name', 'commodity', 'capacity_kg',

@@ -124,10 +124,11 @@ class RegistersUiTest extends TestCase
         $vessel = Vessel::where('name', 'MV Mombasa Pearl')->first();
 
         Livewire::test(CreateVesselDischarge::class)
-            ->fillForm(['voyage_ref' => 'VOY-NEW-1', 'vessel_id' => $vessel->id, 'commodity' => 'cpol', 'bl_quantity_kg' => 900000])
+            ->fillForm(['vessel_id' => $vessel->id, 'commodity' => 'cpol', 'bl_quantity_kg' => 900000])
             ->call('create')->assertHasNoFormErrors();
 
-        $v = VesselDischarge::where('voyage_ref', 'VOY-NEW-1')->first();
+        $v = VesselDischarge::latest('id')->first();
+        $this->assertStringStartsWith('VOY-', $v->voyage_ref);                  // numbered by the system
         $this->assertSame($vessel->id, $v->vessel_id);
         $this->assertSame('MV Mombasa Pearl', $v->vessel_name);                // filled from the register
         $this->assertSame(DischargeStatus::Scheduled, $v->status);
@@ -139,7 +140,7 @@ class RegistersUiTest extends TestCase
         $retired = Vessel::create(['name' => 'MV Retired', 'active' => false]);
 
         Livewire::test(CreateVesselDischarge::class)
-            ->fillForm(['voyage_ref' => 'VOY-NEW-2', 'vessel_id' => $retired->id, 'commodity' => 'cpo', 'bl_quantity_kg' => 1000])
+            ->fillForm(['vessel_id' => $retired->id, 'commodity' => 'cpo', 'bl_quantity_kg' => 1000])
             ->call('create')->assertHasFormErrors(['vessel_id']);
     }
 
@@ -149,10 +150,10 @@ class RegistersUiTest extends TestCase
         $customer = Customer::where('name', 'Unga Group')->first();
 
         Livewire::test(CreateDeliveryOrder::class)
-            ->fillForm(['order_ref' => 'ORD-NEW', 'customer_id' => $customer->id, 'commodity' => 'cpol', 'ordered_kg' => 50000])
+            ->fillForm(['customer_id' => $customer->id, 'commodity' => 'cpol', 'ordered_kg' => 50000])
             ->call('create')->assertHasNoFormErrors();
 
-        $this->assertSame('Unga Group', DeliveryOrder::where('order_ref', 'ORD-NEW')->value('customer'));
+        $this->assertSame('Unga Group', DeliveryOrder::latest('id')->value('customer'));
     }
 
     public function test_editing_a_vessel_through_the_form_renames_its_voyages(): void

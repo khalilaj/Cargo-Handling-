@@ -32,7 +32,7 @@ class BerthResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Forms\Components\TextInput::make('code')->required()->unique(ignoreRecord: true)->maxLength(20),
+            Forms\Components\TextInput::make('code')->label('Berth code')->disabled()->dehydrated(false)->placeholder('Generated automatically'),
             Forms\Components\TextInput::make('name')->required()->maxLength(120),
             Forms\Components\Toggle::make('active')->default(true)->label('In service'),
         ]);
