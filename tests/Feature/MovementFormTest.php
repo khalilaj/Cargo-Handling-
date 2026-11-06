@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Domain\Access\Role;
 use App\Filament\Resources\CargoMovementResource\Pages\ListCargoMovements;
+use App\Filament\Support\MovementForm;
 use App\Models\CargoMovement;
 use App\Models\Tank;
 use App\Models\Truck;
@@ -70,5 +71,26 @@ class MovementFormTest extends TestCase
         Livewire::test(ListCargoMovements::class)
             ->callAction('discharge', $this->data('', 'CPO-02', 'mf-empty'))
             ->assertHasActionErrors(['reference' => 'required']);
+    }
+
+    public function test_choosing_the_tank_fills_in_the_vessel_or_truck_working_on_that_product(): void
+    {
+        $pfad = Tank::where('code', 'PFAD-01')->value('id');      // MV Borneo Trader is discharging PFAD
+        $cpo2 = Tank::where('code', 'CPO-02')->value('id');       // nobody is working on CPO right now
+        $cpol = Tank::where('code', 'CPOL-01')->value('id');      // KCD 452M is loading CPOL
+
+        $this->assertSame('MV Borneo Trader', MovementForm::suggest('vessel', $pfad));
+        $this->assertNull(MovementForm::suggest('vessel', $cpo2));
+        $this->assertSame('KCD 452M', MovementForm::suggest('truck', $cpol));
+        $this->assertNull(MovementForm::suggest('truck', $cpo2));
+        $this->assertNull(MovementForm::suggest('vessel', 0));
+    }
+
+    public function test_the_form_applies_the_suggestion_when_a_tank_is_chosen(): void
+    {
+        Livewire::test(ListCargoMovements::class)
+            ->mountAction('discharge')
+            ->fillForm(['tank_id' => Tank::where('code', 'PFAD-01')->value('id')])
+            ->assertSchemaStateSet(['reference' => 'MV Borneo Trader']);
     }
 }

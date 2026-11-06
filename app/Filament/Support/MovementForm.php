@@ -5,9 +5,13 @@ namespace App\Filament\Support;
 use App\Domain\Cargo\Actions\RecordTruckDelivery;
 use App\Domain\Cargo\Actions\RecordVesselDischarge;
 use App\Domain\Cargo\Exceptions\CargoException;
+use App\Domain\Fleet\Enums\VisitStatus;
+use App\Domain\Operations\Enums\DischargeStatus;
 use App\Models\Tank;
 use App\Models\Truck;
+use App\Models\TruckVisit;
 use App\Models\Vessel;
+use App\Models\VesselDischarge;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Carbon;
@@ -29,7 +33,10 @@ class MovementForm
                         number_format($t->current_volume_kg), number_format($t->capacity_kg)
                     ),
                 ]))
-                ->required()->searchable(),
+                ->required()->searchable()
+                // Choosing the tank fills in the vessel / truck that is actually working on that product.
+                ->live()
+                ->afterStateUpdated(fn ($state, $set) => $set('reference', self::suggest($party, (int) $state))),
             Forms\Components\TextInput::make('quantity_kg')
                 ->label('Quantity (kg, gross)')->numeric()->integer()->minValue(1)->required(),
             Forms\Components\DateTimePicker::make('occurred_at')
@@ -45,6 +52,27 @@ class MovementForm
             // Same value is resubmitted on a double click, so it can never apply twice.
             Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
         ];
+    }
+
+    /**
+     * The one vessel (discharging) or truck (on site, loading or weighed in) that is working on the tank's product.
+     * Several candidates, or none, means no guess: the person picks from the register.
+     */
+    public static function suggest(string $party, int $tankId): ?string
+    {
+        $tank = Tank::find($tankId);
+        if (! $tank) {
+            return null;
+        }
+
+        $names = $party === 'vessel'
+            ? VesselDischarge::where('status', DischargeStatus::Discharging)->where('commodity', $tank->commodity)
+                ->pluck('vessel_name')->unique()
+            : TruckVisit::open()->whereIn('status', [VisitStatus::WeighedIn, VisitStatus::Loading])
+                ->whereHas('order', fn ($q) => $q->where('commodity', $tank->commodity))
+                ->with('truck')->get()->pluck('truck.plate')->unique();
+
+        return $names->count() === 1 ? $names->first() : null;
     }
 
     public static function handle(string $actionClass, array $data, string $successTitle): void
