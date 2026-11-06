@@ -11,7 +11,7 @@
                 />
             </x-slot>
 
-            <div style="max-height:70vh;overflow-y:auto;padding:6px;">
+            <div class="bs-bell-body" style="max-height:70vh;overflow-y:auto;padding:6px;">
                 <div style="padding:8px 10px 6px;font-weight:700;font-size:14px;">Needs attention</div>
 
                 @forelse ($alerts as $a)

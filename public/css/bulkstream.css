@@ -36,3 +36,19 @@ html:not(.dark) .fi-simple-layout { background: radial-gradient(1200px 600px at 
 /* The bell, badges and links read well in ink */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn { background-color: rgba(21,48,55,.08); }
 .fi-simple-layout .fi-logo { height: 2.75rem !important; }
+
+/* Phones: the alerts panel is a sheet under the top bar, never wider than the screen */
+@media (max-width: 640px) {
+    .fi-dropdown-panel:has(.bs-bell-body) {
+        position: fixed !important;
+        top: 4.25rem !important;
+        left: .5rem !important;
+        right: .5rem !important;
+        width: auto !important;
+        max-width: none !important;
+        transform: none !important;
+    }
+    .bs-bell-body { max-height: calc(100vh - 6rem) !important; }
+    .fi-simple-layout .fi-simple-main { margin-left: .75rem; margin-right: .75rem; }
+    .fi-header-heading { font-size: 1.35rem !important; }
+}
