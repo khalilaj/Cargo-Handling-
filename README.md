@@ -15,7 +15,6 @@ A control system for a bulk liquid port terminal. It follows palm oil along the 
 - **Built with:** Laravel 13 and FilamentPHP 5
 - **Repository:** https://github.com/khalilaj/Cargo-Handling-
 - **Live demo:** https://cargo-handling-owno.onrender.com/admin (Render free hosting, database on Supabase)
-- **Demo logins:** `admin@cargo.test`, `supervisor@cargo.test`, `operator@cargo.test`, `auditor@cargo.test`. The password is supplied with the submission.
 
 | Role | What they can do |
 | --- | --- |
