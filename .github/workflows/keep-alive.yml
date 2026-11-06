@@ -1,0 +1,31 @@
+name: Keep alive
+
+# Render's free tier puts a service to sleep after ~15 minutes without traffic.
+# This pings the health check every 10 minutes so the demo answers instantly.
+# GitHub may delay scheduled runs by a few minutes; it is a convenience, not an SLA.
+# For real production use a paid Render instance (no sleeping) and retire this workflow.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    name: Ping /up
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Wake and check the app
+        run: |
+          url="https://cargo-handling-owno.onrender.com/up"
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -m 45 -w '%{http_code}' "$url" || true)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "App did not answer 200 after 6 attempts"
+          exit 1
