@@ -18,13 +18,13 @@ class ListCargoMovements extends ListRecords
                 ->label('Record vessel discharge')->icon('heroicon-o-arrow-down-tray')
                 ->authorize(fn () => auth()->user()?->role->canOperate() ?? false)
                 ->modalHeading('Vessel discharge (inbound) — 0.5% transit loss is applied')
-                ->schema(MovementForm::schema('Vessel name'))
+                ->schema(MovementForm::schema('vessel'))
                 ->action(fn (array $data) => MovementForm::discharge($data)),
             Action::make('delivery')
                 ->label('Record truck delivery')->icon('heroicon-o-truck')->color('warning')
                 ->authorize(fn () => auth()->user()?->role->canOperate() ?? false)
                 ->modalHeading('Truck delivery (outbound)')
-                ->schema(MovementForm::schema('Truck plate'))
+                ->schema(MovementForm::schema('truck'))
                 ->action(fn (array $data) => MovementForm::delivery($data)),
         ];
     }

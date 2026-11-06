@@ -6,6 +6,8 @@ use App\Domain\Cargo\Actions\RecordTruckDelivery;
 use App\Domain\Cargo\Actions\RecordVesselDischarge;
 use App\Domain\Cargo\Exceptions\CargoException;
 use App\Models\Tank;
+use App\Models\Truck;
+use App\Models\Vessel;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Carbon;
@@ -14,7 +16,8 @@ use Illuminate\Support\Str;
 /** Shared modal form + handler for the two operator buttons. */
 class MovementForm
 {
-    public static function schema(string $partyLabel): array
+    /** @param 'vessel'|'truck' $party which register the vessel / truck is picked from */
+    public static function schema(string $party): array
     {
         return [
             Forms\Components\Select::make('tank_id')
@@ -31,7 +34,14 @@ class MovementForm
                 ->label('Quantity (kg, gross)')->numeric()->integer()->minValue(1)->required(),
             Forms\Components\DateTimePicker::make('occurred_at')
                 ->label('When it happened')->seconds(false)->default(now())->required(),
-            Forms\Components\TextInput::make('reference')->label($partyLabel)->maxLength(120),
+            // Picked from the register, never typed: one ship or truck is one record, spelled one way.
+            Forms\Components\Select::make('reference')
+                ->label($party === 'vessel' ? 'Vessel' : 'Truck')
+                ->options(fn () => $party === 'vessel'
+                    ? Vessel::where('active', true)->orderBy('name')->pluck('name', 'name')
+                    : Truck::where('active', true)->orderBy('plate')->pluck('plate', 'plate'))
+                ->searchable()->required()
+                ->helperText($party === 'vessel' ? 'From Registers → Vessels.' : 'From Registers → Trucks.'),
             // Same value is resubmitted on a double click, so it can never apply twice.
             Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
         ];
