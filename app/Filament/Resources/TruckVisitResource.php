@@ -104,15 +104,15 @@ class TruckVisitResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('ref')->label('Visit')->weight('bold'),
                 Tables\Columns\TextColumn::make('truck.plate')->label('Truck')->searchable(),
-                Tables\Columns\TextColumn::make('driver.name')->label('Driver')->placeholder('—'),
-                Tables\Columns\TextColumn::make('order.order_ref')->label('Order'),
+                Tables\Columns\TextColumn::make('driver.name')->visibleFrom('md')->label('Driver')->placeholder('—'),
+                Tables\Columns\TextColumn::make('order.order_ref')->visibleFrom('md')->label('Order'),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (VisitStatus $state) => $state->label())->color(fn (VisitStatus $state) => $state->color()),
                 Tables\Columns\TextColumn::make('loaded_kg')->label('Loaded (kg)')->numeric()->default(0),
                 Tables\Columns\TextColumn::make('warning_count')->label('Warnings')->badge()
                     ->state(fn (TruckVisit $record) => count($record->warnings ?? []) ?: null)
                     ->color('warning')->tooltip(fn (TruckVisit $record) => implode("\n", $record->warnings ?? [])),
-                Tables\Columns\TextColumn::make('gate_in_at')->label('Gate in')->dateTime('d M H:i')->sortable(),
+                Tables\Columns\TextColumn::make('gate_in_at')->visibleFrom('md')->label('Gate in')->dateTime('d M H:i')->sortable(),
             ])
             ->recordActions([ContinueAction::make(DeliveryOrderResource::class, fn ($visit) => DeliveryOrderResource::getUrl('run', ['record' => $visit->delivery_order_id, 'visit' => $visit->id]), iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }

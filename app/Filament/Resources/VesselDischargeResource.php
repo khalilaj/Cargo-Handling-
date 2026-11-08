@@ -95,20 +95,20 @@ class VesselDischargeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('voyage_ref')->label('Voyage')->searchable()->weight('bold'),
                 Tables\Columns\TextColumn::make('vessel_name')->label('Vessel')->searchable(),
-                Tables\Columns\TextColumn::make('berth.code')->label('Berth')->placeholder('—'),
-                Tables\Columns\TextColumn::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
+                Tables\Columns\TextColumn::make('berth.code')->visibleFrom('md')->label('Berth')->placeholder('—'),
+                Tables\Columns\TextColumn::make('commodity')->visibleFrom('md')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (DischargeStatus $state) => $state->label())
                     ->color(fn (DischargeStatus $state) => $state->color()),
-                Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric()->alignEnd(),
+                Tables\Columns\TextColumn::make('bl_quantity_kg')->visibleFrom('md')->label('B/L (kg)')->numeric()->alignEnd(),
                 Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0)->alignEnd(),
-                Tables\Columns\TextColumn::make('transit_loss')->label('Loss (kg)')->alignEnd()
+                Tables\Columns\TextColumn::make('transit_loss')->visibleFrom('md')->label('Loss (kg)')->alignEnd()
                     ->state(fn (VesselDischarge $r) => number_format((int) $r->received_loss_kg))   // the list query already sums it
                     ->tooltip('Transit loss: 0.5% of what was pumped, taken off automatically.'),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
                     ->state(fn (VesselDischarge $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (VesselDischarge $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
-                Tables\Columns\TextColumn::make('eta')->label('ETA')->dateTime('d M H:i')->placeholder('—')->sortable(),
+                Tables\Columns\TextColumn::make('eta')->visibleFrom('md')->label('ETA')->dateTime('d M H:i')->placeholder('—')->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
