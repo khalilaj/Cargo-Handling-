@@ -15,6 +15,6 @@ class TankGauges extends Widget
 
     protected function getViewData(): array
     {
-        return ['tanks' => Tank::orderBy('code')->get()];
+        return ['tanks' => Tank::where('active', true)->orderBy('code')->get()];
     }
 }

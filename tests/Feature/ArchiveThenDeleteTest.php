@@ -4,10 +4,17 @@ namespace Tests\Feature;
 
 use App\Domain\Access\RegisterUsage;
 use App\Domain\Access\Role;
+use App\Domain\Cargo\Actions\RecordVesselDischarge;
+use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Cargo\Exceptions\TankArchivedException;
+use App\Domain\Operations\Services\OperationalAlerts;
+use App\Domain\Reporting\StockPositionReport;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\TankResource\Pages\ListTanks;
 use App\Filament\Resources\TransporterResource\Pages\ListTransporters;
 use App\Filament\Resources\TruckResource\Pages\ListTrucks;
+use App\Filament\Widgets\StockOverview;
+use App\Filament\Widgets\TankGauges;
 use App\Models\AuditLog;
 use App\Models\Berth;
 use App\Models\CargoMovement;
@@ -24,6 +31,7 @@ use App\Models\VesselDischarge;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\RoleScenario;
 use Tests\TestCase;
@@ -158,13 +166,44 @@ class ArchiveThenDeleteTest extends TestCase
         $rows = $tank->movements()->count();
 
         try {
-            $tank->delete();
+            // A savepoint, as in the app's own delete: PostgreSQL aborts the whole transaction after a refused statement.
+            DB::transaction(fn () => $tank->delete());
             $this->fail('The tank was deleted although it has ledger rows.');
         } catch (QueryException) {
             // expected: the foreign key restricts the delete
         }
 
         $this->assertSame($rows, CargoMovement::where('tank_id', $tank->id)->count());
+    }
+
+    public function test_an_archived_tank_takes_no_new_movements(): void
+    {
+        $tank = Tank::create(['name' => 'Spare', 'commodity' => Commodity::CPO, 'capacity_kg' => 1_000_000, 'active' => false]);
+
+        $this->expectException(TankArchivedException::class);
+        try {
+            app(RecordVesselDischarge::class)($tank->id, 10_000, now(), 'arch-1', 'MV Test');
+        } finally {
+            $this->assertSame(0, CargoMovement::where('tank_id', $tank->id)->count());
+            $this->assertSame(0, $tank->fresh()->current_volume_kg);
+        }
+    }
+
+    public function test_archived_tanks_leave_the_boards_but_the_ledger_report_still_reconciles(): void
+    {
+        $capacity = fn () => (int) Tank::where('commodity', 'cpo')->where('active', true)->sum('capacity_kg');
+        $spare = Tank::create(['name' => 'Spare', 'commodity' => Commodity::CPO, 'capacity_kg' => 1_000_000, 'active' => false]);
+        $spare->forceFill(['current_volume_kg' => 990_000])->save();      // nearly full: it would raise an alert if it were counted
+        $this->loginAs(Role::Admin);
+
+        Livewire::test(TankGauges::class)->assertDontSee($spare->code);
+        Livewire::test(StockOverview::class)->assertSee('of '.number_format($capacity() / 1000, 1).' t capacity');
+
+        $archivedAlerts = app(OperationalAlerts::class)->forRole(Role::Admin, 100)->pluck('target.id')->all();
+        $this->assertNotContains($spare->id, $archivedAlerts);
+
+        $report = app(StockPositionReport::class)(now()->subYear(), now());
+        $this->assertTrue(collect($report['rows'])->every(fn ($r) => $r['reconciles']));
     }
 
     public function test_a_tank_holding_cargo_cannot_be_archived(): void

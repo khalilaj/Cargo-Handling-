@@ -20,7 +20,7 @@ class ReportCharts
      */
     public function __invoke(array $stock, array $vessels, array $orders): array
     {
-        $capacity = Tank::query()->get()->groupBy(fn (Tank $t) => $t->commodity->value)
+        $capacity = Tank::query()->where('active', true)->get()->groupBy(fn (Tank $t) => $t->commodity->value)
             ->map(fn ($tanks) => (int) $tanks->sum('capacity_kg'));
 
         $stockBars = [];

@@ -7,6 +7,7 @@ use App\Domain\Cargo\Enums\MovementType;
 use App\Domain\Cargo\Exceptions\CommodityMismatchException;
 use App\Domain\Cargo\Exceptions\InsufficientStockException;
 use App\Domain\Cargo\Exceptions\MovementNotReversibleException;
+use App\Domain\Cargo\Exceptions\TankArchivedException;
 use App\Domain\Cargo\Exceptions\TankCapacityExceededException;
 use App\Models\CargoMovement;
 use App\Models\Tank;
@@ -50,6 +51,10 @@ class TankLedger
 
                 if ($existing = CargoMovement::where('idempotency_key', $idempotencyKey)->first()) {
                     return $existing;
+                }
+
+                if (! $tank->active) {
+                    throw TankArchivedException::for($tank->code);
                 }
 
                 if ($commodity !== null && $commodity !== $tank->commodity) {
@@ -104,6 +109,10 @@ class TankLedger
             }
             if (CargoMovement::where('reverses_movement_id', $original->id)->exists()) {
                 throw new MovementNotReversibleException("Movement #{$original->id} has already been reversed.");
+            }
+            // Reversing a delivery would put cargo back into a tank that can no longer be drawn from: restore the tank first.
+            if (! $tank->active && ! $original->type->isInbound()) {
+                throw TankArchivedException::for($tank->code);
             }
 
             $movement = CargoMovement::create([

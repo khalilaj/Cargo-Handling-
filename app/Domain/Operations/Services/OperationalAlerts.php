@@ -58,7 +58,7 @@ class OperationalAlerts
     private function tankAlerts(): array
     {
         $out = [];
-        foreach (Tank::orderBy('code')->get() as $t) {
+        foreach (Tank::where('active', true)->orderBy('code')->get() as $t) {
             $pct = $t->fillPercent();
             $free = number_format(($t->capacity_kg - $t->current_volume_kg) / 1000, 1);
             $target = ['type' => 'tank', 'id' => $t->id];
