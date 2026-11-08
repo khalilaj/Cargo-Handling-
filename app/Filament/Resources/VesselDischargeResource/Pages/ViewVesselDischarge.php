@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\VesselDischargeResource\Pages;
 
 use App\Filament\Resources\VesselDischargeResource;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewVesselDischarge extends ViewRecord
@@ -12,6 +12,6 @@ class ViewVesselDischarge extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return OperationActions::discharge();
+        return [ContinueAction::make(VesselDischargeResource::class)];
     }
 }

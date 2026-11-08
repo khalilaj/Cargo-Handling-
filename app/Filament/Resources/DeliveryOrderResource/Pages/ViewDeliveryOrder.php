@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\DeliveryOrderResource\Pages;
 
 use App\Filament\Resources\DeliveryOrderResource;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewDeliveryOrder extends ViewRecord
@@ -12,6 +12,6 @@ class ViewDeliveryOrder extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return OperationActions::order();
+        return [ContinueAction::make(DeliveryOrderResource::class)];
     }
 }

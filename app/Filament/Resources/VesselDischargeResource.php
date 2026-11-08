@@ -6,14 +6,14 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\VesselDischargeResource\Pages;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use BackedEnum;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -56,6 +56,7 @@ class VesselDischargeResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
+            ViewEntry::make('workflow')->hiddenLabel()->columnSpanFull()->view('filament.components.status-stepper'),
             Section::make('Vessel')->columns(4)->schema([
                 TextEntry::make('voyage_ref')->label('Voyage'),
                 TextEntry::make('vessel_name')->label('Vessel')
@@ -99,8 +100,11 @@ class VesselDischargeResource extends Resource
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (DischargeStatus $state) => $state->label())
                     ->color(fn (DischargeStatus $state) => $state->color()),
-                Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric(),
-                Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0),
+                Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric()->alignEnd(),
+                Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0)->alignEnd(),
+                Tables\Columns\TextColumn::make('transit_loss')->label('Loss (kg)')->alignEnd()
+                    ->state(fn (VesselDischarge $r) => number_format((int) $r->received_loss_kg))   // the list query already sums it
+                    ->tooltip('Transit loss: 0.5% of what was pumped, taken off automatically.'),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
                     ->state(fn (VesselDischarge $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (VesselDischarge $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
@@ -110,7 +114,7 @@ class VesselDischargeResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(DischargeStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ActionGroup::make(OperationActions::discharge())]);
+            ->recordActions([ContinueAction::make(static::class, iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }
 
     public static function getRelations(): array
@@ -124,6 +128,7 @@ class VesselDischargeResource extends Resource
             'index' => Pages\ListVesselDischarges::route('/'),
             'create' => Pages\CreateVesselDischarge::route('/create'),
             'view' => Pages\ViewVesselDischarge::route('/{record}'),
+            'run' => Pages\RunDischarge::route('/{record}/run'),
         ];
     }
 }

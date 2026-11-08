@@ -21,7 +21,7 @@
 <body>
 <div class="brand"><img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/bulkstream-logo.png'))) }}" style="height:26px"></div>
 <h1>Cargo Handling: terminal report</h1>
-<div class="meta">Period {{ $from->format('d M Y') }} to {{ $until->format('d M Y') }} · generated {{ now()->format('d M Y H:i') }} by {{ $generatedBy }}</div>
+<div class="meta">Period {{ $from->format('d M Y') }} to {{ $until->format('d M Y') }} · generated {{ \App\Support\KenyaTime::of(now())->format('d M Y H:i') }} by {{ $generatedBy }}</div>
 
 <h2>Stock position (kg)</h2>
 <table>

@@ -5,6 +5,7 @@ namespace App\Domain\Operations\Services;
 use App\Domain\Cargo\Enums\Commodity;
 use App\Models\CargoMovement;
 use App\Models\Tank;
+use App\Support\KenyaTime;
 use Carbon\CarbonImmutable;
 
 /** Rebuilds stock levels at any past moment by replaying the ledger. */
@@ -47,7 +48,7 @@ class InventoryHistory
 
         foreach ($tank->movements()->orderBy('occurred_at')->orderBy('id')->get() as $m) {
             $level += $m->delta();
-            $labels[] = $m->occurred_at->format('d M H:i');
+            $labels[] = KenyaTime::of($m->occurred_at)->format('d M H:i');
             $levels[] = $level;
         }
 

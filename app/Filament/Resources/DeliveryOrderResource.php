@@ -6,14 +6,14 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use BackedEnum;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -56,6 +56,7 @@ class DeliveryOrderResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
+            ViewEntry::make('workflow')->hiddenLabel()->columnSpanFull()->view('filament.components.status-stepper'),
             Section::make('Order')->columns(4)->schema([
                 TextEntry::make('order_ref')->label('Order'),
                 TextEntry::make('customer'),
@@ -104,7 +105,7 @@ class DeliveryOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(OrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ActionGroup::make(OperationActions::order())]);
+            ->recordActions([ContinueAction::make(static::class, iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }
 
     public static function getRelations(): array
@@ -118,6 +119,7 @@ class DeliveryOrderResource extends Resource
             'index' => Pages\ListDeliveryOrders::route('/'),
             'create' => Pages\CreateDeliveryOrder::route('/create'),
             'view' => Pages\ViewDeliveryOrder::route('/{record}'),
+            'run' => Pages\RunDelivery::route('/{record}/run'),
         ];
     }
 }

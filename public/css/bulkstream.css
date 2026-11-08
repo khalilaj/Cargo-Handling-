@@ -52,3 +52,103 @@ html:not(.dark) .fi-simple-layout { background: radial-gradient(1200px 600px at 
     .fi-simple-layout .fi-simple-main { margin-left: .75rem; margin-right: .75rem; }
     .fi-header-heading { font-size: 1.35rem !important; }
 }
+
+/* Guidance layer: dashboard guide, screen tips and progress steppers. Plain words, brand ink, readable in dark mode. */
+
+.bs-guide { background: #fff; border: 1px solid var(--bs-line); border-radius: .75rem; padding: 0 1.25rem; }
+.bs-guide summary { cursor: pointer; padding: 1rem 0; list-style: none; display: flex; flex-wrap: wrap; gap: .15rem 1rem; align-items: baseline; }
+.bs-guide summary::-webkit-details-marker { display: none; }
+.bs-guide summary::after { content: "Hide"; margin-left: auto; font-size: .8rem; color: var(--bs-steel); }
+.bs-guide:not([open]) summary::after { content: "Show"; }
+.bs-guide-title { font-family: var(--bs-heading); font-weight: 700; font-size: 1.05rem; color: var(--bs-ink); }
+.bs-guide-sub { font-size: .85rem; color: var(--bs-steel); }
+.bs-guide-list { list-style: none; margin: 0; padding: 0 0 .5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .75rem 1.25rem; }
+.bs-guide-step { display: flex; gap: .75rem; padding: .75rem 0; border-top: 1px solid var(--bs-line); min-width: 0; }
+.bs-guide-num { flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--bs-ink); color: #fff; font-family: var(--bs-heading); font-weight: 700; font-size: .85rem; display: grid; place-items: center; }
+.bs-guide-body { min-width: 0; }
+.bs-guide-body h3 { margin: 0; font-size: .95rem; font-weight: 600; color: var(--bs-ink); display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.bs-guide-body p { margin: .2rem 0 .5rem; font-size: .84rem; line-height: 1.45; color: var(--bs-steel); }
+.bs-chip { font-family: var(--bs-heading); font-size: .7rem; font-weight: 600; padding: .1rem .5rem; border-radius: 999px; background: rgba(217,138,18,.16); color: #7a4500; }
+.bs-guide-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+.bs-guide-link { font-size: .78rem; font-weight: 600; padding: .25rem .65rem; border-radius: .4rem; border: 1px solid var(--bs-ink); color: var(--bs-ink); text-decoration: none; }
+.bs-guide-link:hover { background: var(--bs-ink); color: #fff; }
+
+.bs-flow { width: 100%; padding: .25rem 0 .5rem; }
+.bs-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 0; }
+.bs-step { display: flex; align-items: center; gap: .5rem; flex: 1 1 8rem; min-width: 0; position: relative; font-size: .85rem; color: var(--bs-steel); }
+.bs-step:not(:last-child)::after { content: ""; flex: 1; height: 2px; margin: 0 .6rem; background: var(--bs-line); min-width: 1rem; }
+.bs-step--done:not(:last-child)::after { background: var(--bs-ink); }
+.bs-dot { flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%; display: grid; place-items: center; font-family: var(--bs-heading); font-weight: 700; font-size: .8rem; border: 2px solid var(--bs-line); background: #fff; color: var(--bs-steel); }
+.bs-step--done .bs-dot { background: var(--bs-ink); border-color: var(--bs-ink); color: #fff; }
+.bs-step--current .bs-dot { border-color: #d98a12; background: #d98a12; color: #1a1000; }
+.bs-step--current .bs-step-label { font-weight: 700; color: var(--bs-ink); }
+.bs-flow--cancelled .bs-step { opacity: .55; }
+.bs-next { margin: .75rem 0 0; padding: .6rem .85rem; border-radius: .5rem; background: rgba(217,138,18,.12); color: var(--bs-ink); font-size: .9rem; line-height: 1.45; max-width: 80ch; }
+.bs-flow--cancelled .bs-next { background: rgba(190,40,40,.1); }
+
+html.dark .bs-guide { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+html.dark html.dark .bs-guide-title, html.dark .bs-guide-body h3, html.dark .bs-step--current .bs-step-label, html.dark .bs-next { color: #f0efea; }
+html.dark html.dark .bs-guide-sub, html.dark .bs-guide-body p, html.dark .bs-step, html.dark .bs-guide summary::after { color: #b6c3c7; }
+html.dark .bs-guide-num, html.dark .bs-step--done .bs-dot { background: #6f95a3; border-color: #6f95a3; color: #071215; }
+html.dark .bs-step--done:not(:last-child)::after { background: #6f95a3; }
+html.dark .bs-dot { background: transparent; border-color: rgba(255,255,255,.25); color: #b6c3c7; }
+html.dark .bs-step--current .bs-dot { background: #e39a22; border-color: #e39a22; color: #1a1000; }
+html.dark .bs-guide-step { border-color: rgba(255,255,255,.12); }
+html.dark .bs-guide-link { border-color: #6f95a3; color: #d6e3e7; }
+html.dark .bs-guide-link:hover { background: #6f95a3; color: #071215; }
+html.dark .bs-chip { background: rgba(227,154,34,.2); color: #f6c46c; }
+html.dark .bs-next { background: rgba(227,154,34,.14); }
+
+@media (max-width: 640px) {
+    .bs-steps { flex-direction: column; gap: .6rem; }
+    .bs-step { flex: none; }
+    .bs-step:not(:last-child)::after { display: none; }
+    .bs-guide-list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .bs-guide-link { transition: none; } }
+
+/* Workflow wizard pages: summary strip, progress meter, the one step panel, and the lists inside it. */
+.bs-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .5rem 1.25rem; margin: 0; padding: .9rem 1.1rem; background: #fff; border: 1px solid var(--bs-line); border-radius: .75rem; }
+.bs-summary dt { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-steel); }
+.bs-summary dd { margin: .1rem 0 0; font-family: var(--bs-heading); font-weight: 700; font-size: 1.1rem; color: var(--bs-ink); font-variant-numeric: tabular-nums; }
+.bs-meter { height: .5rem; border-radius: 999px; background: var(--bs-line); overflow: hidden; margin: -.25rem 0 .25rem; }
+.bs-meter i { display: block; height: 100%; background: var(--bs-ink); border-radius: inherit; transition: width .3s; }
+.bs-readonly { margin: 0; padding: .6rem .85rem; border-radius: .5rem; background: rgba(21,48,55,.07); color: var(--bs-ink); font-size: .9rem; }
+.bs-panel { background: #fff; border: 1px solid var(--bs-line); border-radius: .75rem; padding: 1.25rem 1.4rem 1.4rem; display: flex; flex-direction: column; gap: .9rem; }
+.bs-panel h2 { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--bs-ink); }
+.bs-panel-lead { margin: 0; max-width: 70ch; color: var(--bs-steel); line-height: 1.5; }
+.bs-panel form { display: flex; flex-direction: column; gap: 1rem; max-width: 42rem; }
+.bs-panel-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.bs-lane { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.bs-lane a, .bs-lane span { display: inline-flex; flex-direction: column; padding: .45rem .8rem; border-radius: .5rem; border: 1px solid var(--bs-line); text-decoration: none; color: var(--bs-ink); font-size: .85rem; line-height: 1.3; }
+.bs-lane a:hover { border-color: var(--bs-ink); }
+.bs-lane .is-current { border-color: #d98a12; box-shadow: inset 0 0 0 1px #d98a12; }
+.bs-lane small { color: var(--bs-steel); }
+.bs-list h3 { margin: .4rem 0 .4rem; font-size: .95rem; font-weight: 600; color: var(--bs-ink); }
+.bs-table-wrap { overflow-x: auto; }
+.bs-table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.bs-table th, .bs-table td { text-align: left; padding: .4rem .7rem .4rem 0; border-bottom: 1px solid var(--bs-line); white-space: nowrap; }
+.bs-table th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-steel); font-weight: 600; }
+.bs-table .num { text-align: right; padding-right: 1rem; }
+html.dark .bs-summary, html.dark .bs-panel { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+html.dark .bs-summary dt, html.dark .bs-panel-lead, html.dark .bs-lane small, html.dark .bs-table th { color: #b6c3c7; }
+html.dark .bs-summary dd, html.dark .bs-panel h2, html.dark .bs-list h3, html.dark .bs-lane a, html.dark .bs-lane span, html.dark .bs-readonly { color: #f0efea; }
+html.dark .bs-meter { background: rgba(255,255,255,.12); }
+html.dark .bs-meter i { background: #6f95a3; }
+html.dark .bs-table th, html.dark .bs-table td { border-color: rgba(255,255,255,.12); }
+html.dark .bs-lane a, html.dark .bs-lane span { border-color: rgba(255,255,255,.18); }
+html.dark .bs-readonly { background: rgba(255,255,255,.07); }
+@media (max-width: 640px) { .bs-panel { padding: 1rem; } .bs-panel-actions > * { flex: 1 1 100%; } }
+
+/* Delivery wizard: the trucks on site as buttons, sub-step headings, and the footer buttons. */
+.bs-lane-btn { display: inline-flex; flex-direction: column; align-items: flex-start; padding: .45rem .8rem; border-radius: .5rem; border: 1px solid var(--bs-line); background: transparent; color: var(--bs-ink); font-size: .85rem; line-height: 1.3; cursor: pointer; text-align: left; }
+.bs-lane-btn:hover { border-color: var(--bs-ink); }
+.bs-lane-btn:focus-visible { outline: 2px solid #d98a12; outline-offset: 2px; }
+.bs-lane-btn.is-current { border-color: #d98a12; box-shadow: inset 0 0 0 1px #d98a12; }
+.bs-lane-btn small { color: var(--bs-steel); }
+.bs-sub { margin: .6rem 0 0; font-size: 1rem; font-weight: 600; color: var(--bs-ink); }
+.bs-panel-foot { margin-top: .5rem; padding-top: .9rem; border-top: 1px solid var(--bs-line); }
+html.dark .bs-lane-btn { color: #f0efea; border-color: rgba(255,255,255,.18); }
+html.dark .bs-lane-btn small { color: #b6c3c7; }
+html.dark .bs-sub { color: #f0efea; }
+html.dark .bs-panel-foot { border-color: rgba(255,255,255,.12); }

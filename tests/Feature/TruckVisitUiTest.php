@@ -6,7 +6,7 @@ use App\Domain\Access\Role;
 use App\Domain\Fleet\Actions\TruckVisitWorkflow;
 use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Enums\OrderStatus;
-use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
+use App\Filament\Resources\DeliveryOrderResource\Pages\RunDelivery;
 use App\Filament\Resources\TruckVisitResource\Pages\ListTruckVisits;
 use App\Filament\Resources\TruckVisitResource\Pages\ViewTruckVisit;
 use App\Livewire\AlertsBell;
@@ -18,7 +18,6 @@ use App\Models\Truck;
 use App\Models\TruckVisit;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
@@ -77,8 +76,10 @@ class TruckVisitUiTest extends TestCase
     {
         $this->login(Role::Operator);
 
-        Livewire::test(ListTruckVisits::class)
-            ->callAction('gate_in', data: $this->gate())
+        Livewire::test(RunDelivery::class, ['record' => $this->gate()['order_id']])
+            ->call('startGateIn')
+            ->set('gateInData.truck_id', $this->gate()['truck_id'])->set('gateInData.driver_id', $this->gate()['driver_id'])
+            ->call('gateIn')
             ->assertNotified('Gated in with warnings');
 
         $v = TruckVisit::where('truck_id', Truck::where('plate', 'KDA 214X')->value('id'))->first();
@@ -90,22 +91,26 @@ class TruckVisitUiTest extends TestCase
     public function test_a_truck_already_on_site_is_not_offered_again(): void
     {
         $this->login(Role::Operator);
+        $order = $this->gate()['order_id'];
 
-        Livewire::test(ListTruckVisits::class)
-            ->callAction('gate_in', data: $this->gate(['truck_id' => Truck::where('plate', 'KCD 452M')->value('id')]))     // already in the loading bay
-            ->assertHasActionErrors(['truck_id']);
+        Livewire::test(RunDelivery::class, ['record' => $order])
+            ->set('gateInData.truck_id', Truck::where('plate', 'KCD 452M')->value('id'))     // already in the loading bay
+            ->call('gateIn')->assertHasErrors(['gateInData.truck_id']);
 
-        Livewire::test(ListTruckVisits::class)
-            ->callAction('gate_in', data: $this->gate(['driver_id' => Driver::where('name', 'Joseph Kamau')->value('id')]))  // driver is on site
-            ->assertHasActionErrors(['driver_id']);
+        Livewire::test(RunDelivery::class, ['record' => $order])
+            ->set('gateInData.truck_id', $this->gate()['truck_id'])
+            ->set('gateInData.driver_id', Driver::where('name', 'Joseph Kamau')->value('id'))  // driver is on site
+            ->call('gateIn')->assertHasErrors(['gateInData.driver_id']);
     }
 
-    public function test_the_gate_only_offers_orders_that_can_still_take_trucks(): void
+    public function test_a_completed_order_cannot_take_more_trucks(): void
     {
         $this->login(Role::Operator);
         $done = DeliveryOrder::where('order_ref', 'ORD-1001')->value('id');                // completed
 
-        Livewire::test(ListTruckVisits::class)->callAction('gate_in', data: $this->gate(['order_id' => $done]))->assertHasActionErrors(['order_id']);
+        Livewire::test(RunDelivery::class, ['record' => $done])
+            ->assertDontSee('Gate in a truck')                                             // the wizard has no gate for a closed order
+            ->set('gateInData.truck_id', $this->gate()['truck_id'])->call('gateIn')->assertNotified('Not done');   // and the domain refuses a crafted request
     }
 
     public function test_an_operator_runs_a_visit_from_gate_to_gate(): void
@@ -113,30 +118,28 @@ class TruckVisitUiTest extends TestCase
         $this->login(Role::Operator);
         $visit = TruckVisit::where('status', VisitStatus::Arrived->value)->first();         // KCB 887L for ORD-1003 (loading)
         $cpol = Tank::where('code', 'CPOL-01')->value('id');
+        $load = fn ($w, int $kg, string $key) => $w->set('loadData.tank_id', $cpol)->set('loadData.quantity_kg', $kg)
+            ->set('loadData.occurred_at', now()->toDateTimeString())->set('loadData.idempotency_key', $key)->call('load');
 
-        $page = fn () => Livewire::test(ViewTruckVisit::class, ['record' => $visit->id]);
+        $w = Livewire::test(RunDelivery::class, ['record' => $visit->delivery_order_id])->call('selectVisit', $visit->id);
 
-        $page()->assertActionHidden('start_loading')->assertActionHidden('weigh_out')->assertActionVisible('weigh_in');
-        $page()->callAction('weigh_in', data: ['kg' => 15_000])->assertNotified('Weighed in');
-        $page()->callAction('start_loading')->assertNotified('Loading started');
-        $page()->assertActionVisible('load_visit')->assertActionHidden('weigh_in');
+        $w->assertSee('Weigh the empty truck')->assertDontSee('Release the truck');
+        $w->set('weighInData.kg', 15_000)->call('weighIn')->assertNotified('Weighed in');
+        $w->call('startTruckLoading')->assertNotified('Loading started')->assertSee('Load from a tank')->assertDontSee('Weigh the empty truck');
 
         // Payload is 32,000 kg: this overload is refused with a clear message and books nothing.
-        $page()->callAction('load_visit', data: ['tank_id' => $cpol, 'quantity_kg' => 33_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-v1'])
-            ->assertNotified('Rejected');
+        $load($w, 33_000, 'ui-v1')->assertNotified('Not done');
         $this->assertSame(0, $visit->fresh()->loadedKg());
 
-        $page()->callAction('load_visit', data: ['tank_id' => $cpol, 'quantity_kg' => 25_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-v2'])
-            ->assertNotified('Loaded');
+        $load($w, 25_000, 'ui-v2')->assertNotified('Loaded');
         $this->assertSame(25_000, $visit->fresh()->loadedKg());
 
-        $page()->callAction('weigh_out', data: ['kg' => 15_000 + 25_000])->assertNotified('Weighed out');
-        $page()->callAction('gate_out')->assertNotified('Truck has left site');
+        $w->set('weighOutData.kg', 15_000 + 25_000)->call('weighOut')->assertNotified('Weighed out')->assertSee('Release the truck');
+        $w->call('gateOut')->assertNotified('Truck has left site');
 
         $v = $visit->fresh();
         $this->assertSame(VisitStatus::Departed, $v->status);
         $this->assertNull($v->active_truck_id);
-        $page()->assertActionHidden('gate_out')->assertActionHidden('cancel_visit');
     }
 
     public function test_a_wrong_move_is_rejected_with_a_message(): void
@@ -144,8 +147,8 @@ class TruckVisitUiTest extends TestCase
         $this->login(Role::Operator);
         $weighedIn = TruckVisit::where('status', VisitStatus::WeighedIn->value)->first();   // KDA 999Z for ORD-1004, which is still pending
 
-        Livewire::test(ViewTruckVisit::class, ['record' => $weighedIn->id])
-            ->callAction('start_loading')->assertNotified('Rejected');                         // "Start loading the order first"
+        Livewire::test(RunDelivery::class, ['record' => $weighedIn->delivery_order_id])
+            ->call('selectVisit', $weighedIn->id)->call('startTruckLoading')->assertNotified('Not done');   // "Start loading the order first"
 
         $this->assertSame(VisitStatus::WeighedIn, $weighedIn->fresh()->status);
     }
@@ -155,7 +158,8 @@ class TruckVisitUiTest extends TestCase
         $this->login(Role::Operator);
         $v = TruckVisit::where('status', VisitStatus::Arrived->value)->first();
 
-        Livewire::test(ListTruckVisits::class)->callAction(TestAction::make('cancel_visit')->table($v))->assertNotified('Visit cancelled');
+        Livewire::test(RunDelivery::class, ['record' => $v->delivery_order_id])
+            ->call('selectVisit', $v->id)->callAction('cancel_visit')->assertNotified('Truck visit cancelled');
 
         $this->assertSame(VisitStatus::Cancelled, $v->fresh()->status);
         $this->assertFalse($v->truck->fresh()->activeVisit()->exists());
@@ -167,8 +171,11 @@ class TruckVisitUiTest extends TestCase
         $v = TruckVisit::where('status', VisitStatus::Loading->value)->first();
 
         Livewire::test(ListTruckVisits::class)->assertActionHidden('gate_in');
-        Livewire::test(ViewTruckVisit::class, ['record' => $v->id])
-            ->assertActionHidden('load_visit')->assertActionHidden('weigh_out')->assertActionHidden('weigh_in');
+        Livewire::test(ViewTruckVisit::class, ['record' => $v->id])->assertActionHidden('continue');
+
+        Livewire::test(RunDelivery::class, ['record' => $v->delivery_order_id])->call('selectVisit', $v->id)
+            ->assertSee('You can look at this order but not change it')->assertSee('Weigh out')
+            ->set('weighOutData.kg', 30_000)->call('weighOut')->assertForbidden();
     }
 
     public function test_an_order_with_a_truck_on_site_cannot_be_completed_from_the_screen(): void
@@ -176,8 +183,7 @@ class TruckVisitUiTest extends TestCase
         $this->login(Role::Operator);
         $order = DeliveryOrder::where('order_ref', 'ORD-1003')->first();                      // loading; two trucks on site, one load booked
 
-        Livewire::test(ListDeliveryOrders::class)
-            ->callAction(TestAction::make('to_completed')->table($order))->assertNotified('Rejected');
+        Livewire::test(RunDelivery::class, ['record' => $order->id])->call('finishOrder')->call('completeOrder')->assertNotified('Not done');
 
         $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
     }

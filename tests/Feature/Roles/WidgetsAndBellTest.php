@@ -10,6 +10,7 @@ use App\Filament\Widgets\StockOverview;
 use App\Filament\Widgets\TankGauges;
 use App\Filament\Widgets\TrucksOnSite;
 use App\Filament\Widgets\VesselsInPort;
+use App\Filament\Widgets\WorkflowGuide;
 use App\Livewire\AlertsBell;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +29,7 @@ class WidgetsAndBellTest extends TestCase
     {
         $all = ['admin', 'supervisor', 'operator', 'auditor'];
         $overseers = ['admin', 'supervisor', 'auditor'];
+        $doers = ['admin', 'supervisor', 'operator'];
 
         return [
             StockOverview::class => $all,
@@ -36,6 +38,7 @@ class WidgetsAndBellTest extends TestCase
             TrucksOnSite::class => $all,
             InventoryTrend::class => $overseers,
             RecentMovements::class => $overseers,
+            WorkflowGuide::class => $doers,   // auditors only read, so they get no how-to-work guide
         ];
     }
 
