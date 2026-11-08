@@ -114,7 +114,7 @@ class TruckVisitResource extends Resource
                     ->color('warning')->tooltip(fn (TruckVisit $record) => implode("\n", $record->warnings ?? [])),
                 Tables\Columns\TextColumn::make('gate_in_at')->label('Gate in')->dateTime('d M H:i')->sortable(),
             ])
-            ->recordActions([ViewAction::make(), ContinueAction::make(DeliveryOrderResource::class, fn ($visit) => DeliveryOrderResource::getUrl('run', ['record' => $visit->delivery_order_id, 'visit' => $visit->id]))]);
+            ->recordActions([ContinueAction::make(DeliveryOrderResource::class, fn ($visit) => DeliveryOrderResource::getUrl('run', ['record' => $visit->delivery_order_id, 'visit' => $visit->id]), iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }
 
     public static function getRelations(): array

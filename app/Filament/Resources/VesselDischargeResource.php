@@ -100,9 +100,9 @@ class VesselDischargeResource extends Resource
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (DischargeStatus $state) => $state->label())
                     ->color(fn (DischargeStatus $state) => $state->color()),
-                Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric(),
-                Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0),
-                Tables\Columns\TextColumn::make('transit_loss')->label('Loss (kg)')
+                Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric()->alignEnd(),
+                Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0)->alignEnd(),
+                Tables\Columns\TextColumn::make('transit_loss')->label('Loss (kg)')->alignEnd()
                     ->state(fn (VesselDischarge $r) => number_format((int) $r->received_loss_kg))   // the list query already sums it
                     ->tooltip('Transit loss: 0.5% of what was pumped, taken off automatically.'),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
@@ -114,7 +114,7 @@ class VesselDischargeResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(DischargeStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ContinueAction::make(static::class)]);
+            ->recordActions([ContinueAction::make(static::class, iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }
 
     public static function getRelations(): array
