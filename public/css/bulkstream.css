@@ -152,3 +152,43 @@ html.dark .bs-lane-btn { color: #f0efea; border-color: rgba(255,255,255,.18); }
 html.dark .bs-lane-btn small { color: #b6c3c7; }
 html.dark .bs-sub { color: #f0efea; }
 html.dark .bs-panel-foot { border-color: rgba(255,255,255,.12); }
+
+/* Quick amounts under the Quantity field. Big enough to tap, two to a row on a phone. */
+.bs-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: -.25rem; }
+.bs-chip-btn { display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 2.75rem; padding: .4rem .85rem; border-radius: .6rem; border: 1px solid var(--bs-line); background: #fff; color: var(--bs-ink); cursor: pointer; font-size: .78rem; line-height: 1.25; text-align: left; }
+.bs-chip-btn strong { font-family: var(--bs-heading); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.bs-chip-btn:hover:not(:disabled) { border-color: var(--bs-ink); background: rgba(21,48,55,.05); }
+.bs-chip-btn:focus-visible { outline: 2px solid #d98a12; outline-offset: 2px; }
+.bs-chip-btn:disabled { opacity: .5; cursor: not-allowed; }
+html.dark .bs-chip-btn { background: rgba(255,255,255,.04); color: #f0efea; border-color: rgba(255,255,255,.18); }
+html.dark .bs-chip-btn:hover:not(:disabled) { border-color: #6f95a3; background: rgba(111,149,163,.15); }
+
+/* Phone-first: the screen is about the next thing to do. Secondary figures wait behind "More figures". */
+.bs-step-count, .bs-more-btn { display: none; }
+@media (max-width: 640px) {
+    .fi-breadcrumbs { display: none; }
+    .bs-flow { padding-bottom: 0; }
+    .bs-step-count { display: block; margin: 0 0 .4rem; font-family: var(--bs-heading); font-weight: 600; font-size: .95rem; color: var(--bs-ink); }
+    .bs-steps { flex-direction: row; flex-wrap: nowrap; gap: .4rem; }
+    .bs-step { flex: 0 0 auto; }
+    .bs-step-label { display: none; }
+    .bs-dot { width: 1.4rem; height: 1.4rem; font-size: .7rem; }
+    .bs-flow .bs-next { margin-top: .5rem; font-size: .85rem; }
+    .bs-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .7rem .9rem; }
+    .bs-summary dd { font-size: 1rem; }
+    .bs-summary .bs-secondary { display: none; }
+    .bs-summary-wrap.is-open .bs-secondary { display: block; }
+    .bs-more-btn { display: inline-flex; align-self: flex-start; margin-top: .4rem; padding: .35rem .2rem; background: none; border: 0; color: var(--bs-ink); font-size: .85rem; font-weight: 600; text-decoration: underline; cursor: pointer; }
+    .bs-more-btn:focus-visible { outline: 2px solid #d98a12; outline-offset: 2px; }
+    .bs-hide-sm { display: none; }
+    .bs-chip-btn { flex: 1 1 calc(50% - .5rem); min-height: 3rem; }
+    /* Bigger touch targets, and the main buttons stay within thumb reach at the bottom of the screen. */
+    .bs-panel .fi-input-wrp, .bs-panel select, .bs-panel input { min-height: 2.9rem; }
+    .bs-panel .fi-btn { min-height: 2.9rem; font-size: .95rem; }
+    .bs-panel-actions:not(.bs-panel-foot) { position: sticky; bottom: 0; z-index: 5; margin: 0 -1rem -1rem; padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid var(--bs-line); border-radius: 0 0 .75rem .75rem; }
+    /* The dashboard guide keeps each step's name, count and button, and drops the explanation. */
+    .bs-guide-body p { display: none; }
+    .bs-guide-sub { display: none; }
+}
+html.dark .bs-step-count, html.dark .bs-more-btn { color: #f0efea; }
+@media (max-width: 640px) { html.dark .bs-panel-actions:not(.bs-panel-foot) { background: #12242f; border-color: rgba(255,255,255,.12); } }

@@ -7,9 +7,12 @@ use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\RecordDischargeIntoTank;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\VesselDischargeResource;
+use App\Filament\Support\Concerns\HasQuantityChips;
+use App\Filament\Support\QuantityChips;
 use App\Filament\Support\WizardFields;
 use App\Filament\Support\WorkflowSteps;
 use App\Models\Berth;
+use App\Models\Tank;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -30,6 +33,7 @@ use Livewire\Attributes\Url;
  */
 class RunDischarge extends Page
 {
+    use HasQuantityChips;
     use InteractsWithRecord;
 
     protected static string $resource = VesselDischargeResource::class;
@@ -148,6 +152,7 @@ class RunDischarge extends Page
                 fn () => 'Remaining on the bill of lading: '.number_format($this->record->remainingKg()).' kg',
                 live: true,
             ),
+            $this->quantityChipsComponent(),
             Text::make(fn (Get $get): string => WizardFields::lossPreview((int) $get('quantity_kg')))->color('warning'),
             WizardFields::when(),
             Forms\Components\Hidden::make('idempotency_key'),
@@ -161,6 +166,23 @@ class RunDischarge extends Page
             Forms\Components\Textarea::make('shortfall_reason')->label('Why is it being closed early?')->required()->maxLength(500)
                 ->helperText(fn () => "Only {$this->record->progressPercent()}% of the bill of lading has been received ({$this->record->remainingKg()} kg still on the ship)."),
         ]);
+    }
+
+    /** Quarter, half and everything that fits, from what is left on the ship and the room in the chosen tank. */
+    public function quantityChips(): array
+    {
+        $limits = ['All remaining' => $this->record->remainingKg()];
+
+        if ($tank = Tank::find($this->pumpData['tank_id'] ?? null)) {
+            $limits['Fill the tank'] = QuantityChips::grossThatFits($tank->capacity_kg - $tank->current_volume_kg);
+        }
+
+        return QuantityChips::from($limits);
+    }
+
+    protected function quantityStatePath(): string
+    {
+        return 'pumpData';
     }
 
     private function resetPumpForm(): void

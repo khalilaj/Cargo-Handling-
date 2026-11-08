@@ -9,9 +9,12 @@ use App\Domain\Operations\Actions\AdvanceOrderStatus;
 use App\Domain\Operations\Actions\RecordTruckLoad;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource;
+use App\Filament\Support\Concerns\HasQuantityChips;
+use App\Filament\Support\QuantityChips;
 use App\Filament\Support\WizardFields;
 use App\Filament\Support\WorkflowSteps;
 use App\Models\Driver;
+use App\Models\Tank;
 use App\Models\Truck;
 use App\Models\TruckVisit;
 use Closure;
@@ -33,6 +36,7 @@ use Livewire\Attributes\Url;
  */
 class RunDelivery extends Page
 {
+    use HasQuantityChips;
     use InteractsWithRecord;
 
     protected static string $resource = DeliveryOrderResource::class;
@@ -203,9 +207,31 @@ class RunDelivery extends Page
                 fn () => $this->record->remainingKg(),
                 fn () => ($v = $this->currentVisit($this->onSite())) ? WizardFields::loadHint($v) : '',
             ),
+            $this->quantityChipsComponent(),
             WizardFields::when('When'),
             Forms\Components\Hidden::make('idempotency_key'),
         ]);
+    }
+
+    /** Quarter, half and everything that fits, from what the order still needs, the room on the truck and the tank's stock. */
+    public function quantityChips(): array
+    {
+        $visit = $this->currentVisit($this->onSite());
+        $limits = ['Rest of the order' => $this->record->remainingKg()];
+
+        if ($visit?->truck?->capacity_kg) {
+            $limits['Fill the truck'] = max($visit->truck->capacity_kg - $visit->loadedKg(), 0);
+        }
+        if ($tank = Tank::find($this->loadData['tank_id'] ?? null)) {
+            $limits['Empty the tank'] = $tank->current_volume_kg;
+        }
+
+        return QuantityChips::from($limits);
+    }
+
+    protected function quantityStatePath(): string
+    {
+        return 'loadData';
     }
 
     private static function weight(string $label, string $help): Forms\Components\TextInput

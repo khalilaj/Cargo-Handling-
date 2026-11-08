@@ -2,13 +2,16 @@
 <x-filament-panels::page>
     @include('filament.components.stepper-flow', ['flow' => $flow, 'showHint' => false])
 
+    <div x-data="{ more: false }" class="bs-summary-wrap" :class="{ 'is-open': more }">
     <dl class="bs-summary">
         <div><dt>Customer</dt><dd>{{ $this->record->customer }}</dd></div>
-        <div><dt>Ordered</dt><dd>{{ number_format($ordered) }} kg</dd></div>
+        <div class="bs-secondary"><dt>Ordered</dt><dd>{{ number_format($ordered) }} kg</dd></div>
         <div><dt>Loaded</dt><dd>{{ number_format($delivered) }} kg</dd></div>
         <div><dt>Still to load</dt><dd>{{ number_format($remaining) }} kg</dd></div>
-        <div><dt>Trucks on site</dt><dd>{{ $onSite->count() }}</dd></div>
+        <div class="bs-secondary"><dt>Trucks on site</dt><dd>{{ $onSite->count() }}</dd></div>
     </dl>
+    <button type="button" class="bs-more-btn" x-on:click="more = ! more"><span x-text="more ? 'Hide figures' : 'More figures'">More figures</span></button>
+    </div>
     <div class="bs-meter" role="img" aria-label="{{ $percent }} percent of the order delivered"><i style="width: {{ $percent }}%"></i></div>
 
     {{-- Every role sees the same steps and the same forms. Roles that may not press a step see its controls switched off. --}}
