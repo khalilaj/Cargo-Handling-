@@ -16,4 +16,10 @@ class CreateVesselDischarge extends CreateRecord
 
         return $data;
     }
+
+    /** A new voyage goes straight into the wizard, on its first step. */
+    protected function getRedirectUrl(): string
+    {
+        return VesselDischargeResource::getUrl('run', ['record' => $this->getRecord()]);
+    }
 }

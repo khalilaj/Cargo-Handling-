@@ -6,6 +6,7 @@ use App\Domain\Access\Role;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ViewDeliveryOrder;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
 use App\Models\CargoMovement;
 use App\Models\DeliveryOrder;
@@ -15,7 +16,6 @@ use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use PHPUnit\Framework\AssertionFailedError;
 use Tests\TestCase;
 
 class RolesTest extends TestCase
@@ -96,24 +96,15 @@ class RolesTest extends TestCase
         $v = VesselDischarge::where('status', DischargeStatus::Discharging->value)->first();
         $o = DeliveryOrder::where('status', OrderStatus::Loading->value)->first();
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->assertActionHidden('pump')->assertActionHidden('to_completed');
-        Livewire::test(ViewDeliveryOrder::class, ['record' => $o->id])
-            ->assertActionHidden('load')->assertActionHidden('to_completed');
+        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])->assertActionHidden('continue');
+        Livewire::test(ViewDeliveryOrder::class, ['record' => $o->id])->assertActionHidden('continue');
 
         // Calling it anyway is refused, and nothing is written.
         $before = CargoMovement::count();
-        $refused = false;
-        try {
-            Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-                ->callAction('pump', data: [
-                    'tank_id' => Tank::where('code', 'PFAD-01')->value('id'), 'quantity_kg' => 1_000,
-                    'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'sneaky',
-                ]);
-        } catch (AssertionFailedError) {
-            $refused = true;                     // Filament refuses to run an unauthorised action
-        }
-        $this->assertTrue($refused, 'an auditor must not be able to run the pump action');
+        Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->set('pumpData.tank_id', Tank::where('code', 'PFAD-01')->value('id'))->set('pumpData.quantity_kg', 1_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'sneaky')
+            ->call('pump')->assertForbidden();   // the wizard refuses an auditor who sends the step anyway
         $this->assertSame($before, CargoMovement::count());
     }
 
@@ -122,13 +113,11 @@ class RolesTest extends TestCase
         $this->as(Role::Operator);
         $v = VesselDischarge::where('status', DischargeStatus::Discharging->value)->first();
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->assertActionVisible('pump')
-            ->callAction('pump', data: [
-                'tank_id' => Tank::where('code', 'PFAD-01')->value('id'), 'quantity_kg' => 10_000,
-                'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'op-1',
-            ])
-            ->assertNotified('Cargo pumped into tank');
+        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])->assertActionVisible('continue');
+        Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->set('pumpData.tank_id', Tank::where('code', 'PFAD-01')->value('id'))->set('pumpData.quantity_kg', 10_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'op-1')
+            ->call('pump')->assertNotified('Cargo pumped into tank');
     }
 
     public function test_nobody_can_delete_operational_data(): void

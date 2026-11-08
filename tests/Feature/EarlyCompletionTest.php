@@ -9,7 +9,7 @@ use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\RecordDischargeIntoTank;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Exceptions\OperationIncompleteException;
-use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Models\Tank;
 use App\Models\User;
 use App\Models\VesselDischarge;
@@ -109,17 +109,19 @@ class EarlyCompletionTest extends TestCase
         $this->assertFalse($voyage->isFullyDischarged());
 
         $this->loginAs(Role::Operator);
-        Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])
-            ->callAction('to_completed')->assertNotified('Rejected');
+        Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->call('finishPumping')->call('complete')->assertNotified('Not done');
         $this->assertSame(DischargeStatus::Discharging, $voyage->fresh()->status);
 
         $this->loginAs(Role::Supervisor);
-        Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])
-            ->callAction('to_completed', ['shortfall_reason' => ''])->assertHasActionErrors(['shortfall_reason' => 'required']);
+        Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->call('finishPumping')->set('completeData.shortfall_reason', '')->call('complete')
+            ->assertHasErrors(['completeData.shortfall_reason' => 'required']);
         $this->assertSame(DischargeStatus::Discharging, $voyage->fresh()->status);
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])
-            ->callAction('to_completed', ['shortfall_reason' => 'Balance rolled to the next call'])->assertNotified('Discharge is now Completed');
+        Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->call('finishPumping')->set('completeData.shortfall_reason', 'Balance rolled to the next call')->call('complete')
+            ->assertNotified('Voyage completed');
         $this->assertSame('Balance rolled to the next call', $voyage->fresh()->completion_note);
     }
 }

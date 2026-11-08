@@ -10,6 +10,7 @@ use App\Filament\Resources\CargoMovementResource\Pages\ListCargoMovements;
 use App\Filament\Resources\CorrectionRequestResource\Pages\ListCorrectionRequests;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
+use App\Filament\Resources\DeliveryOrderResource\Pages\RunDelivery;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ViewDeliveryOrder;
 use App\Filament\Resources\DriverResource\Pages\ListDrivers;
 use App\Filament\Resources\TankResource\Pages\ListTanks;
@@ -19,8 +20,10 @@ use App\Filament\Resources\TruckVisitResource\Pages\ListTruckVisits;
 use App\Filament\Resources\TruckVisitResource\Pages\ViewTruckVisit;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\VesselDischargeResource\Pages\ListVesselDischarges;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
 use App\Filament\Resources\VesselResource\Pages\ListVessels;
+use App\Models\Berth;
 use App\Models\CargoMovement;
 use App\Models\CorrectionRequest;
 use App\Models\DeliveryOrder;
@@ -144,11 +147,12 @@ class ActionMatrixTest extends TestCase
 
     public function test_voyage_buttons_by_state_and_role(): void
     {
-        $actions = ['to_berthed', 'to_discharging', 'pump', 'to_completed', 'to_cancelled'];
+        // One forward button, and it only leads to the wizard. The steps themselves live on the wizard page.
+        $actions = ['continue'];
         $visibleIn = [
-            'VOY-2611-05' => ['to_berthed', 'to_cancelled'],                          // scheduled
-            'VOY-2611-04' => ['to_discharging', 'to_cancelled'],                      // berthed
-            'VOY-2611-03' => ['pump', 'to_completed', 'to_cancelled'],                // discharging
+            'VOY-2611-05' => ['continue'],                                            // scheduled
+            'VOY-2611-04' => ['continue'],                                            // berthed
+            'VOY-2611-03' => ['continue'],                                            // discharging
             'VOY-2611-01' => [],                                                      // completed
             'VOY-EDGE-1' => [],                                                       // cancelled
         ];
@@ -167,10 +171,10 @@ class ActionMatrixTest extends TestCase
 
     public function test_order_buttons_by_state_and_role(): void
     {
-        $actions = ['to_loading', 'load', 'to_completed', 'to_cancelled'];
+        $actions = ['continue'];
         $visibleIn = [
-            'ORD-1004' => ['to_loading', 'to_cancelled'],                             // pending
-            'ORD-1003' => ['load', 'to_completed', 'to_cancelled'],                   // loading
+            'ORD-1004' => ['continue'],                                               // pending
+            'ORD-1003' => ['continue'],                                               // loading
             'ORD-1001' => [],                                                         // completed
             'ORD-EDGE-1' => [],                                                       // cancelled
         ];
@@ -196,12 +200,13 @@ class ActionMatrixTest extends TestCase
         app(RecordTruckLoad::class)($this->order('ORD-1003'), Tank::where('code', 'CPOL-01')->value('id'), 5_000, now(), 'weighed-out-load', null, $visit);
         $flow->weighOut($visit, 19_000);
 
-        $actions = ['weigh_in', 'start_loading', 'load_visit', 'weigh_out', 'gate_out', 'cancel_visit'];
+        // One forward button per visit; the steps themselves live in the order's wizard.
+        $actions = ['continue'];
         $visibleIn = [
-            'KCB 887L' => ['weigh_in', 'cancel_visit'],                                // arrived
-            'KDA 999Z' => ['start_loading', 'cancel_visit'],                           // weighed in
-            'KCD 452M' => ['load_visit', 'weigh_out'],                                 // loading
-            'KEDGE 3C' => ['gate_out'],                                                // weighed out
+            'KCB 887L' => ['continue'],                                                // arrived
+            'KDA 999Z' => ['continue'],                                                // weighed in
+            'KCD 452M' => ['continue'],                                                // loading
+            'KEDGE 3C' => ['continue'],                                                // weighed out
             'KEDGE 1A' => [],                                                          // departed
             'KEDGE 2B' => [],                                                          // cancelled
         ];
@@ -337,13 +342,23 @@ class ActionMatrixTest extends TestCase
         $crafted = fn (string $page, array $params, string $action) => fn () => Livewire::test($page, $params)->call('mountAction', $action)->call('callMountedAction');
 
         $attempts = [
-            'cancel a scheduled voyage' => $crafted(ViewVesselDischarge::class, ['record' => $scheduled->id], 'to_cancelled'),
-            'complete the discharging voyage' => $crafted(ViewVesselDischarge::class, ['record' => $this->voyage('VOY-2611-03')->id], 'to_completed'),
-            'complete the loading order' => $crafted(ViewDeliveryOrder::class, ['record' => $loading->id], 'to_completed'),
-            'cancel the loading order' => $crafted(ViewDeliveryOrder::class, ['record' => $loading->id], 'to_cancelled'),
-            'weigh out a loading truck' => $crafted(ViewTruckVisit::class, ['record' => $armed->id], 'weigh_out'),
-            'start loading a weighed-in truck' => $crafted(ViewTruckVisit::class, ['record' => $weighedIn->id], 'start_loading'),
-            'cancel an arrived truck' => $crafted(ViewTruckVisit::class, ['record' => $arrived->id], 'cancel_visit'),
+            'cancel a scheduled voyage' => $crafted(RunDischarge::class, ['record' => $scheduled->id], 'cancel_voyage'),
+            'berth a scheduled voyage' => fn () => Livewire::test(RunDischarge::class, ['record' => $scheduled->id])
+                ->set('berthData.berth_id', Berth::first()->id)->call('berth'),
+            'start a berthed voyage' => fn () => Livewire::test(RunDischarge::class, ['record' => $this->voyage('VOY-2611-04')->id])->call('start'),
+            'complete the discharging voyage' => fn () => Livewire::test(RunDischarge::class, ['record' => $this->voyage('VOY-2611-03')->id])
+                ->call('finishPumping')->call('complete'),
+            'complete the loading order' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])->call('finishOrder')->call('completeOrder'),
+            'cancel the loading order' => $crafted(RunDelivery::class, ['record' => $loading->id], 'cancel_order'),
+            'open a pending order' => fn () => Livewire::test(RunDelivery::class, ['record' => $this->order('ORD-1004')->id])->call('openLoading'),
+            'gate in a truck' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])
+                ->set('gateInData.truck_id', Truck::where('plate', 'KDA 214X')->value('id'))->call('gateIn'),
+            'weigh out a loading truck' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])
+                ->call('selectVisit', $armed->id)->set('weighOutData.kg', 30_000)->call('weighOut'),
+            'start loading a weighed-in truck' => fn () => Livewire::test(RunDelivery::class, ['record' => $this->order('ORD-1004')->id])
+                ->call('selectVisit', $weighedIn->id)->call('startTruckLoading'),
+            'cancel an arrived truck' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])
+                ->call('selectVisit', $arrived->id)->call('mountAction', 'cancel_visit')->call('callMountedAction'),
         ];
 
         foreach ($attempts as $what => $attempt) {
@@ -366,15 +381,16 @@ class ActionMatrixTest extends TestCase
         $order = $this->order('ORD-1003');
         $loadingVisit = $this->visitOf('KCD 452M');
 
-        $pump = fn () => Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])->callAction('pump', data: [
-            'tank_id' => $tank->id, 'quantity_kg' => 1_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'crafted-pump']);
-        $load = fn () => Livewire::test(ViewDeliveryOrder::class, ['record' => $order->id])->callAction('load', data: [
-            'visit_id' => $loadingVisit->id, 'tank_id' => Tank::where('code', 'CPOL-01')->value('id'), 'quantity_kg' => 1_000,
-            'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'crafted-load']);
-        $visitLoad = fn () => Livewire::test(ViewTruckVisit::class, ['record' => $loadingVisit->id])->callAction('load_visit', data: [
-            'tank_id' => Tank::where('code', 'CPOL-01')->value('id'), 'quantity_kg' => 1_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'crafted-visit-load']);
-        $gateIn = fn () => Livewire::test(ListTruckVisits::class)->callAction('gate_in', data: [
-            'order_id' => $order->id, 'truck_id' => Truck::where('plate', 'KDA 214X')->value('id')]);
+        $pump = fn () => Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->set('pumpData.tank_id', $tank->id)->set('pumpData.quantity_kg', 1_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'crafted-pump')->call('pump');
+        $loadInto = fn (string $key) => fn () => Livewire::test(RunDelivery::class, ['record' => $order->id])->call('selectVisit', $loadingVisit->id)
+            ->set('loadData.tank_id', Tank::where('code', 'CPOL-01')->value('id'))->set('loadData.quantity_kg', 1_000)
+            ->set('loadData.occurred_at', now()->toDateTimeString())->set('loadData.idempotency_key', $key)->call('load');
+        $load = $loadInto('crafted-load');
+        $visitLoad = $loadInto('crafted-visit-load');
+        $gateIn = fn () => Livewire::test(RunDelivery::class, ['record' => $order->id])
+            ->set('gateInData.truck_id', Truck::where('plate', 'KDA 214X')->value('id'))->call('gateIn');
         $movement = CargoMovement::where('idempotency_key', 'seed-1')->first();
         $correct = fn () => Livewire::test(ListCargoMovements::class)->callAction(TestAction::make('request_correction')->table($movement), data: ['reason' => 'Crafted request to be refused.']);
 

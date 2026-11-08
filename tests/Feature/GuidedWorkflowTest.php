@@ -5,10 +5,11 @@ namespace Tests\Feature;
 use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
-use App\Filament\Resources\TruckVisitResource\Pages\ViewTruckVisit;
+use App\Filament\Resources\DeliveryOrderResource\Pages\RunDelivery;
 use App\Filament\Resources\VesselDischargeResource\Pages\ListVesselDischarges;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\WizardFields;
 use App\Filament\Support\WorkflowSteps;
 use App\Filament\Widgets\WorkflowGuide;
 use App\Models\DeliveryOrder;
@@ -117,11 +118,11 @@ class GuidedWorkflowTest extends TestCase
     {
         $v = VesselDischarge::where('status', DischargeStatus::Berthed->value)->firstOrFail();
 
-        $page = Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])->callAction('to_discharging');
+        $page = Livewire::test(RunDischarge::class, ['record' => $v->id])->call('start');
 
         $next = WorkflowSteps::for($v->fresh())['hint'];
         $this->assertStringContainsString('Pump into tank', $next);
-        $page->assertNotified(Notification::make()->title('Discharge is now Discharging')->body($next)->success()->duration(10000));
+        $page->assertNotified(Notification::make()->title('Discharge started')->body($next)->success()->duration(8000));
     }
 
     public function test_truck_steps_pop_up_the_next_button(): void
@@ -129,11 +130,12 @@ class GuidedWorkflowTest extends TestCase
         $visit = TruckVisit::where('status', VisitStatus::Arrived->value)->first();
         $this->assertNotNull($visit, 'the seed has a truck that has just arrived');
 
-        $page = Livewire::test(ViewTruckVisit::class, ['record' => $visit->id])->callAction('weigh_in', data: ['kg' => 15_000]);
+        $page = Livewire::test(RunDelivery::class, ['record' => $visit->delivery_order_id])
+            ->call('selectVisit', $visit->id)->set('weighInData.kg', 15_000)->call('weighIn');
 
         $next = WorkflowSteps::for($visit->fresh())['hint'];
         $this->assertStringContainsString('Start loading', $next);
-        $page->assertNotified(Notification::make()->title('Weighed in')->body($next)->success()->duration(10000));
+        $page->assertNotified(Notification::make()->title('Weighed in')->body($next)->success()->duration(8000));
     }
 
     public function test_discharge_list_shows_the_transit_loss(): void
@@ -147,21 +149,11 @@ class GuidedWorkflowTest extends TestCase
 
     public function test_pump_form_previews_the_transit_loss_in_plain_words(): void
     {
-        $preview = new \ReflectionMethod(OperationActions::class, 'lossPreview');
 
-        $this->assertStringContainsString('Enter a quantity', $preview->invoke(null, 0));
-        $text = $preview->invoke(null, 1_000_000);
+        $this->assertStringContainsString('Enter a quantity', WizardFields::lossPreview(0));
+        $text = WizardFields::lossPreview(1_000_000);
         $this->assertStringContainsString('1,000,000 kg', $text);
         $this->assertStringContainsString('5,000 kg is lost in transit (0.5%)', $text);
         $this->assertStringContainsString('995,000 kg goes into the tank', $text);
-    }
-
-    public function test_only_the_vessel_pump_form_carries_the_loss_preview(): void
-    {
-        $form = new \ReflectionMethod(OperationActions::class, 'movementForm');
-        $names = fn (bool $loss) => collect($form->invoke(null, 'cpo', 100_000, 'B/L', $loss))->map(fn ($c) => class_basename($c))->all();
-
-        $this->assertContains('Text', $names(true));
-        $this->assertNotContains('Text', $names(false));   // truck loading has no transit loss
     }
 }

@@ -44,9 +44,11 @@ class AccessMatrixTest extends TestCase
             // Operations: everyone sees them; only managers schedule / create
             'filament.admin.resources.vessel-discharges.index' => self::ALL,
             'filament.admin.resources.vessel-discharges.view' => self::ALL,
+            'filament.admin.resources.vessel-discharges.run' => self::ALL,   // the wizard: everyone may look, only operators can press
             'filament.admin.resources.vessel-discharges.create' => self::MANAGERS,
             'filament.admin.resources.delivery-orders.index' => self::ALL,
             'filament.admin.resources.delivery-orders.view' => self::ALL,
+            'filament.admin.resources.delivery-orders.run' => self::ALL,   // the wizard: everyone may look, only operators can press
             'filament.admin.resources.delivery-orders.create' => self::MANAGERS,
             'filament.admin.resources.truck-visits.index' => self::ALL,
             'filament.admin.resources.truck-visits.view' => self::ALL,
