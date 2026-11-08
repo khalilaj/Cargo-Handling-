@@ -143,7 +143,7 @@ class DeliveryWizardTest extends TestCase
         $this->loginAs(Role::Auditor);
         $order = $this->order('ORD-1004');
 
-        $this->wizard($order)->assertSee('You can look at this order but not change it')->assertDontSee('Start loading');
+        $this->wizard($order)->assertSee('You can look at this order but not change it')->assertSee('Start loading');   // same step, switched off
         $this->wizard($order)->call('openLoading')->assertForbidden();
         $this->assertSame(OrderStatus::Pending, $order->fresh()->status);
     }
@@ -193,5 +193,19 @@ class DeliveryWizardTest extends TestCase
         $new = DeliveryOrder::latest('id')->first();
         $this->assertSame(OrderStatus::Pending, $new->status);
         $page->assertRedirect(DeliveryOrderResource::getUrl('run', ['record' => $new]));
+    }
+
+    public function test_every_role_sees_the_same_process(): void
+    {
+        $loading = $this->visitOf('KCD 452M');
+
+        foreach (Role::cases() as $role) {
+            $this->loginAs($role);
+
+            $this->wizard($this->order('ORD-1004'))->assertSee('Open loading')->assertSee('Start loading');
+            $this->wizard($this->order('ORD-1003'))->assertSee('Trucks')->assertSee('Gate in another truck')->assertSee('Finish the order')
+                ->call('selectVisit', $loading->id)->assertSee('Load from a tank')->assertSee('Weigh out');
+            $this->wizard($this->order('ORD-1001'))->assertSee('Order complete');
+        }
     }
 }

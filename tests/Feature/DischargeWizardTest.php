@@ -118,7 +118,7 @@ class DischargeWizardTest extends TestCase
     {
         $this->loginAs(Role::Auditor);
 
-        $this->wizard($this->voyage('VOY-2611-05'))->assertSee('You can look at this voyage but not change it')->assertDontSee('Mark berthed and continue');
+        $this->wizard($this->voyage('VOY-2611-05'))->assertSee('You can look at this voyage but not change it')->assertSee('Mark berthed and continue');   // same step, switched off
 
         $v = $this->voyage('VOY-2611-04');
         $this->wizard($v)->call('start')->assertForbidden();
@@ -157,5 +157,39 @@ class DischargeWizardTest extends TestCase
         $new = VesselDischarge::latest('id')->first();
         $this->assertSame(DischargeStatus::Scheduled, $new->status);
         $page->assertRedirect(VesselDischargeResource::getUrl('run', ['record' => $new]));
+    }
+
+    public function test_every_role_sees_the_same_process(): void
+    {
+        $expect = [
+            'VOY-2611-05' => ['Berth the ship', 'Mark berthed and continue'],
+            'VOY-2611-04' => ['Start the discharge', 'Start discharge'],
+            'VOY-2611-03' => ['Pump into a tank', 'Pump into tank', 'Finish pumping early'],
+            'VOY-2611-01' => ['Voyage complete'],
+        ];
+
+        foreach (Role::cases() as $role) {
+            $this->loginAs($role);
+            foreach ($expect as $ref => $texts) {
+                $wizard = $this->wizard($this->voyage($ref))->assertSee('Scheduled')->assertSee('Discharging')->assertSee('Completed');
+                foreach ($texts as $text) {
+                    $wizard->assertSee($text, escape: true);
+                }
+            }
+        }
+    }
+
+    public function test_the_early_close_step_looks_the_same_for_every_role_but_only_supervisors_can_use_it(): void
+    {
+        foreach (Role::cases() as $role) {
+            $this->loginAs($role);
+            $this->wizard($this->voyage('VOY-2611-03'))->call('finishPumping')
+                ->assertSee('Complete the voyage')->assertSee('Why is it being closed early?')->assertSee('Complete voyage');
+        }
+
+        $v = $this->voyage('VOY-2611-03');
+        $this->loginAs(Role::Operator);
+        $this->wizard($v)->call('finishPumping')->set('completeData.shortfall_reason', 'Trying anyway')->call('complete')->assertNotified('Not done');
+        $this->assertSame(DischargeStatus::Discharging, $v->fresh()->status);
     }
 }

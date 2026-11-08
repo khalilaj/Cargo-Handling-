@@ -73,6 +73,12 @@ class RunDischarge extends Page
         return auth()->user()?->role->canOperate() ?? false;
     }
 
+    /** Supervisors and admins may close a voyage below 99% of the bill of lading, with a reason. */
+    public function canCloseEarly(): bool
+    {
+        return auth()->user()?->role->canApprove() ?? false;
+    }
+
     public function panel(): string
     {
         return match ($this->record->status) {
@@ -92,7 +98,7 @@ class RunDischarge extends Page
             'flow' => WorkflowSteps::for($d),
             'panel' => $this->panel(),
             'canOperate' => $this->canOperate(),
-            'canCloseEarly' => auth()->user()?->role->canApprove() ?? false,
+            'canCloseEarly' => $this->canCloseEarly(),
             'fullyIn' => $d->isFullyDischarged(),
             'gross' => $d->receivedGrossKg(),
             'loss' => $d->transitLossKg(),
@@ -123,7 +129,7 @@ class RunDischarge extends Page
 
     public function berthForm(Schema $schema): Schema
     {
-        return $schema->statePath('berthData')->components([
+        return $schema->statePath('berthData')->disabled(fn () => ! $this->canOperate())->components([
             Forms\Components\Select::make('berth_id')->label('Berth')->required()
                 ->options(fn () => Berth::where('active', true)->orderBy('code')->get()
                     ->filter(fn (Berth $b) => ($o = $b->occupant()) === null || $o->id === $this->record->id)
@@ -135,7 +141,7 @@ class RunDischarge extends Page
 
     public function pumpForm(Schema $schema): Schema
     {
-        return $schema->statePath('pumpData')->components([
+        return $schema->statePath('pumpData')->disabled(fn () => ! $this->canOperate())->components([
             WizardFields::tank($this->record->commodity),
             WizardFields::quantity(
                 fn () => $this->record->remainingKg(),
@@ -150,7 +156,8 @@ class RunDischarge extends Page
 
     public function completeForm(Schema $schema): Schema
     {
-        return $schema->statePath('completeData')->components([
+        // Everyone sees the reason box. Only roles that may close a voyage early can fill it in.
+        return $schema->statePath('completeData')->disabled(fn () => ! $this->canCloseEarly())->components([
             Forms\Components\Textarea::make('shortfall_reason')->label('Why is it being closed early?')->required()->maxLength(500)
                 ->helperText(fn () => "Only {$this->record->progressPercent()}% of the bill of lading has been received ({$this->record->remainingKg()} kg still on the ship)."),
         ]);
@@ -200,7 +207,7 @@ class RunDischarge extends Page
 
     public function complete(): void
     {
-        $early = ! $this->record->isFullyDischarged() && (auth()->user()?->role->canApprove() ?? false);
+        $early = ! $this->record->isFullyDischarged() && $this->canCloseEarly();
 
         $this->act(function () use ($early) {
             $reason = $early ? $this->completeForm->getState()['shortfall_reason'] : null;

@@ -10,7 +10,7 @@
                 <tbody>
                     @foreach ($pumps as $m)
                         <tr>
-                            <td>{{ $m->occurred_at->copy()->timezone('Africa/Nairobi')->format('d M H:i') }}</td>
+                            <td>{{ \App\Support\KenyaTime::of($m->occurred_at)->format('d M H:i') }}</td>
                             <td>{{ $m->tank?->code ?? '?' }}</td>
                             <td class="num">{{ number_format($m->gross_kg) }}</td>
                             <td class="num">{{ number_format($m->loss_kg) }}</td>
