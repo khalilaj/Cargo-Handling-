@@ -68,8 +68,13 @@ class OperationActions
                 ->color($to === DischargeStatus::Cancelled ? 'danger' : 'gray')
                 ->requiresConfirmation()
                 ->visible(fn (VesselDischarge $record) => $record->status->canTransitionTo($to))
-                ->action(fn (VesselDischarge $record) => self::run(
-                    fn () => app(AdvanceDischargeStatus::class)($record, $to),
+                // Closing early (cargo still on the ship) asks a supervisor for the reason; everyone else is told why not.
+                ->schema(fn (VesselDischarge $record) => $to === DischargeStatus::Completed && ! $record->isFullyDischarged() && (auth()->user()?->role->canApprove() ?? false)
+                    ? [Forms\Components\Textarea::make('shortfall_reason')->label('Why is it being closed early?')->required()->maxLength(500)
+                        ->helperText("Only {$record->progressPercent()}% of the bill of lading has been received ({$record->remainingKg()} kg still on the ship).")]
+                    : [])
+                ->action(fn (array $data, VesselDischarge $record) => self::run(
+                    fn () => app(AdvanceDischargeStatus::class)($record, $to, null, $data['shortfall_reason'] ?? null, auth()->user()),
                     "Discharge is now {$to->label()}",
                 ));
         }
