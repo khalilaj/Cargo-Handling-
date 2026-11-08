@@ -84,7 +84,7 @@ class OperationalAlerts
             $target = ['type' => 'voyage', 'id' => $d->id];
 
             if ($d->status === DischargeStatus::Scheduled && $d->eta && $d->eta->isPast()) {
-                $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name}: ETA passed", 'detail' => "{$d->voyage_ref} is still scheduled; ETA was {$d->eta->format('d M H:i')}.", 'target' => $target];
+                $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name}: ETA passed", 'detail' => "{$d->voyage_ref} is still scheduled; ETA was {KenyaTime::of($d->eta)->format('d M H:i')}.", 'target' => $target];
             } elseif ($d->status === DischargeStatus::Discharging && $d->started_at && $d->started_at->lt(now()->subHours(48))) {
                 $left = number_format($d->remainingKg() / 1000, 1);
                 $out[] = ['level' => 'warning', 'title' => "{$d->vessel_name} discharging for over 48 h", 'detail' => "{$d->voyage_ref}: {$left} t left on the bill of lading ({$d->progressPercent()}% received).", 'target' => $target];
@@ -100,7 +100,7 @@ class OperationalAlerts
         $overdue = DeliveryOrder::where('status', OrderStatus::Pending->value)->whereNotNull('scheduled_at')->where('scheduled_at', '<', now())->get();
 
         foreach ($overdue as $o) {
-            $out[] = ['level' => 'warning', 'title' => "{$o->order_ref} overdue", 'detail' => "{$o->customer}: scheduled for {$o->scheduled_at->format('d M H:i')} but not started.", 'target' => ['type' => 'order', 'id' => $o->id]];
+            $out[] = ['level' => 'warning', 'title' => "{$o->order_ref} overdue", 'detail' => "{$o->customer}: scheduled for {KenyaTime::of($o->scheduled_at)->format('d M H:i')} but not started.", 'target' => ['type' => 'order', 'id' => $o->id]];
         }
 
         return $out;

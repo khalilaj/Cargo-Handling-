@@ -170,7 +170,7 @@ class RunDelivery extends Page
 
     public function gateInForm(Schema $schema): Schema
     {
-        return $schema->statePath('gateInData')->components([
+        return $schema->statePath('gateInData')->disabled(fn () => ! $this->canOperate())->components([
             Forms\Components\Select::make('truck_id')->label('Truck')->required()->searchable()
                 ->options(fn () => Truck::where('active', true)->whereDoesntHave('activeVisit')->orderBy('plate')->get()
                     ->mapWithKeys(fn (Truck $t) => [$t->id => $t->plate.' · '.$t->complianceStatus()->label()]))
@@ -185,19 +185,19 @@ class RunDelivery extends Page
 
     public function weighInForm(Schema $schema): Schema
     {
-        return $schema->statePath('weighInData')->components([self::weight('Weighbridge reading (kg)', 'The truck is empty.')]);
+        return $schema->statePath('weighInData')->disabled(fn () => ! $this->canOperate())->components([self::weight('Weighbridge reading (kg)', 'The truck is empty.')]);
     }
 
     public function weighOutForm(Schema $schema): Schema
     {
-        return $schema->statePath('weighOutData')->components([
+        return $schema->statePath('weighOutData')->disabled(fn () => ! $this->canOperate())->components([
             self::weight('Weighbridge reading (kg)', 'Full truck. It is compared with what was booked out of the tanks.'),
         ]);
     }
 
     public function loadForm(Schema $schema): Schema
     {
-        return $schema->statePath('loadData')->components([
+        return $schema->statePath('loadData')->disabled(fn () => ! $this->canOperate())->components([
             WizardFields::tank($this->record->commodity),
             WizardFields::quantity(
                 fn () => $this->record->remainingKg(),

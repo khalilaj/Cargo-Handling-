@@ -8,6 +8,7 @@ use App\Domain\Corrections\Actions\RejectCorrection;
 use App\Domain\Corrections\Enums\CorrectionStatus;
 use App\Filament\Resources\CorrectionRequestResource\Pages;
 use App\Models\CorrectionRequest;
+use App\Support\KenyaTime;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -105,7 +106,7 @@ class CorrectionRequestResource extends Resource
                     ->state(fn (CorrectionRequest $r) => "#{$r->cargo_movement_id} · {$r->movement->tank->code} · ".number_format($r->movement->net_kg).' kg')
                     ->description(fn (CorrectionRequest $r) => $r->movement->reference),
                 Tables\Columns\TextColumn::make('reason')->limit(40)->tooltip(fn (CorrectionRequest $r) => $r->reason),
-                Tables\Columns\TextColumn::make('requester.name')->label('By')->description(fn (CorrectionRequest $r) => $r->created_at->format('d M H:i')),
+                Tables\Columns\TextColumn::make('requester.name')->label('By')->description(fn (CorrectionRequest $r) => KenyaTime::of($r->created_at)->format('d M H:i')),
                 Tables\Columns\TextColumn::make('decider.name')->label('Decided by')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordUrl(fn (CorrectionRequest $record) => static::getUrl('view', ['record' => $record]))

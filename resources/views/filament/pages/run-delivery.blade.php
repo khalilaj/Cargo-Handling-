@@ -1,3 +1,4 @@
+@php($readOnly = ! $canOperate)
 <x-filament-panels::page>
     @include('filament.components.stepper-flow', ['flow' => $flow, 'showHint' => false])
 
@@ -10,8 +11,9 @@
     </dl>
     <div class="bs-meter" role="img" aria-label="{{ $percent }} percent of the order delivered"><i style="width: {{ $percent }}%"></i></div>
 
-    @if (! $canOperate)
-        <p class="bs-readonly">You can look at this order but not change it.</p>
+    {{-- Every role sees the same steps and the same forms. Roles that may not press a step see its controls switched off. --}}
+    @if ($readOnly)
+        <p class="bs-readonly">You can look at this order but not change it. The controls below are switched off for your role; operators and supervisors press them.</p>
     @endif
 
     <section class="bs-panel" wire:key="panel-{{ $panel }}">
@@ -22,11 +24,9 @@
                 @if ($onSite->isNotEmpty())
                     <p class="bs-panel-lead">Already at the gate for this order: {{ $onSite->map(fn ($v) => $v->truck->plate)->join(', ') }}.</p>
                 @endif
-                @if ($canOperate)
-                    <div class="bs-panel-actions">
-                        <x-filament::button size="lg" wire:click="openLoading" wire:loading.attr="disabled" wire:target="openLoading">Start loading</x-filament::button>
-                    </div>
-                @endif
+                <div class="bs-panel-actions">
+                    <x-filament::button size="lg" :disabled="$readOnly" wire:click="openLoading" wire:loading.attr="disabled" wire:target="openLoading">Start loading</x-filament::button>
+                </div>
                 @break
 
             @case ('trucks')
@@ -54,51 +54,43 @@
                 @switch ($lane)
                     @case ('gate-in')
                         <h3 class="bs-sub">Gate in a truck</h3>
-                        @if ($canOperate)
-                            <form wire:submit="gateIn">
-                                {{ $this->gateInForm }}
-                                <div class="bs-panel-actions">
-                                    <x-filament::button type="submit" wire:loading.attr="disabled" wire:target="gateIn">Gate in truck</x-filament::button>
-                                    @if ($onSite->isNotEmpty())
-                                        <x-filament::button color="gray" type="button" wire:click="backToTrucks">Back to the trucks on site</x-filament::button>
-                                    @endif
-                                </div>
-                            </form>
-                        @endif
+                        <form wire:submit="gateIn">
+                            {{ $this->gateInForm }}
+                            <div class="bs-panel-actions">
+                                <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="gateIn">Gate in truck</x-filament::button>
+                                @if ($onSite->isNotEmpty())
+                                    <x-filament::button color="gray" type="button" wire:click="backToTrucks">Back to the trucks on site</x-filament::button>
+                                @endif
+                            </div>
+                        </form>
                         @break
 
                     @case ('weigh-in')
                         <h3 class="bs-sub">Weigh the empty truck</h3>
-                        @if ($canOperate)
-                            <form wire:submit="weighIn">
-                                {{ $this->weighInForm }}
-                                <div class="bs-panel-actions">
-                                    <x-filament::button type="submit" wire:loading.attr="disabled" wire:target="weighIn">Weigh in</x-filament::button>
-                                </div>
-                            </form>
-                        @endif
+                        <form wire:submit="weighIn">
+                            {{ $this->weighInForm }}
+                            <div class="bs-panel-actions">
+                                <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="weighIn">Weigh in</x-filament::button>
+                            </div>
+                        </form>
                         @break
 
                     @case ('start')
                         <h3 class="bs-sub">Move the truck into the loading bay</h3>
                         <p class="bs-panel-lead">{{ $current->truck->plate }} is weighed in at {{ number_format($current->weigh_in_kg) }} kg.</p>
-                        @if ($canOperate)
-                            <div class="bs-panel-actions">
-                                <x-filament::button size="lg" wire:click="startTruckLoading" wire:loading.attr="disabled" wire:target="startTruckLoading">Start loading</x-filament::button>
-                            </div>
-                        @endif
+                        <div class="bs-panel-actions">
+                            <x-filament::button size="lg" :disabled="$readOnly" wire:click="startTruckLoading" wire:loading.attr="disabled" wire:target="startTruckLoading">Start loading</x-filament::button>
+                        </div>
                         @break
 
                     @case ('load')
                         <h3 class="bs-sub">Load from a tank</h3>
-                        @if ($canOperate)
-                            <form wire:submit="load">
-                                {{ $this->loadForm }}
-                                <div class="bs-panel-actions">
-                                    <x-filament::button type="submit" wire:loading.attr="disabled" wire:target="load">Load from tank</x-filament::button>
-                                </div>
-                            </form>
-                        @endif
+                        <form wire:submit="load">
+                            {{ $this->loadForm }}
+                            <div class="bs-panel-actions">
+                                <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="load">Load from tank</x-filament::button>
+                            </div>
+                        </form>
                         @if ($loads->isNotEmpty())
                             <div class="bs-list">
                                 <h3>Loaded onto this truck</h3>
@@ -108,7 +100,7 @@
                                         <tbody>
                                             @foreach ($loads as $m)
                                                 <tr>
-                                                    <td>{{ $m->occurred_at->copy()->timezone('Africa/Nairobi')->format('d M H:i') }}</td>
+                                                    <td>{{ \App\Support\KenyaTime::of($m->occurred_at)->format('d M H:i') }}</td>
                                                     <td>{{ $m->tank?->code ?? '?' }}</td>
                                                     <td class="num">{{ number_format($m->gross_kg) }}</td>
                                                 </tr>
@@ -119,35 +111,29 @@
                             </div>
                         @endif
                         <h3 class="bs-sub">When the truck is full, weigh it out</h3>
-                        @if ($canOperate)
-                            <form wire:submit="weighOut">
-                                {{ $this->weighOutForm }}
-                                <div class="bs-panel-actions">
-                                    <x-filament::button type="submit" color="gray" wire:loading.attr="disabled" wire:target="weighOut">Weigh out</x-filament::button>
-                                </div>
-                            </form>
-                        @endif
+                        <form wire:submit="weighOut">
+                            {{ $this->weighOutForm }}
+                            <div class="bs-panel-actions">
+                                <x-filament::button type="submit" color="gray" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="weighOut">Weigh out</x-filament::button>
+                            </div>
+                        </form>
                         @break
 
                     @case ('gate-out')
                         <h3 class="bs-sub">Release the truck</h3>
                         <p class="bs-panel-lead">{{ $current->truck->plate }} has been weighed out. The last step of this visit is to let it leave.</p>
-                        @if ($canOperate)
-                            <div class="bs-panel-actions">
-                                <x-filament::button size="lg" wire:click="gateOut" wire:loading.attr="disabled" wire:target="gateOut">Gate out</x-filament::button>
-                            </div>
-                        @endif
+                        <div class="bs-panel-actions">
+                            <x-filament::button size="lg" :disabled="$readOnly" wire:click="gateOut" wire:loading.attr="disabled" wire:target="gateOut">Gate out</x-filament::button>
+                        </div>
                         @break
                 @endswitch
 
-                @if ($canOperate)
-                    <div class="bs-panel-actions bs-panel-foot">
-                        @if ($lane !== 'gate-in')
-                            <x-filament::button color="gray" type="button" wire:click="startGateIn">Gate in another truck</x-filament::button>
-                        @endif
-                        <x-filament::button color="gray" type="button" wire:click="finishOrder">Finish the order</x-filament::button>
-                    </div>
-                @endif
+                <div class="bs-panel-actions bs-panel-foot">
+                    @if ($lane !== 'gate-in')
+                        <x-filament::button color="gray" type="button" wire:click="startGateIn">Gate in another truck</x-filament::button>
+                    @endif
+                    <x-filament::button color="gray" type="button" wire:click="finishOrder">Finish the order</x-filament::button>
+                </div>
                 @break
 
             @case ('complete')
@@ -159,14 +145,12 @@
                 @else
                     <p class="bs-panel-lead">{{ number_format($delivered) }} kg of {{ number_format($ordered) }} kg was loaded. Press Complete to close the order.</p>
                 @endif
-                @if ($canOperate)
-                    <div class="bs-panel-actions">
-                        @if ($onSite->isEmpty() && $delivered > 0)
-                            <x-filament::button wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder">Complete order</x-filament::button>
-                        @endif
-                        <x-filament::button color="gray" type="button" wire:click="backToTrucks">Back to the trucks</x-filament::button>
-                    </div>
-                @endif
+                <div class="bs-panel-actions">
+                    @if ($onSite->isEmpty() && $delivered > 0)
+                        <x-filament::button :disabled="$readOnly" wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder">Complete order</x-filament::button>
+                    @endif
+                    <x-filament::button color="gray" type="button" wire:click="backToTrucks">Back to the trucks</x-filament::button>
+                </div>
                 @break
 
             @case ('done')

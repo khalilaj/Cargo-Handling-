@@ -174,7 +174,7 @@ class TruckVisitUiTest extends TestCase
         Livewire::test(ViewTruckVisit::class, ['record' => $v->id])->assertActionHidden('continue');
 
         Livewire::test(RunDelivery::class, ['record' => $v->delivery_order_id])->call('selectVisit', $v->id)
-            ->assertSee('You can look at this order but not change it')->assertDontSee('Weigh out')
+            ->assertSee('You can look at this order but not change it')->assertSee('Weigh out')
             ->set('weighOutData.kg', 30_000)->call('weighOut')->assertForbidden();
     }
 
