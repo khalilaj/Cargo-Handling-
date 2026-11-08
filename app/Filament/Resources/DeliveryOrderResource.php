@@ -90,16 +90,16 @@ class DeliveryOrderResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('order_ref')->label('Order')->searchable()->weight('bold'),
                 Tables\Columns\TextColumn::make('customer')->searchable(),
-                Tables\Columns\TextColumn::make('commodity')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
+                Tables\Columns\TextColumn::make('commodity')->visibleFrom('md')->badge()->formatStateUsing(fn (Commodity $state) => strtoupper($state->value)),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->formatStateUsing(fn (OrderStatus $state) => $state->label())
                     ->color(fn (OrderStatus $state) => $state->color()),
-                Tables\Columns\TextColumn::make('ordered_kg')->label('Ordered (kg)')->numeric(),
-                Tables\Columns\TextColumn::make('delivered_kg')->label('Delivered (kg)')->numeric()->default(0),
+                Tables\Columns\TextColumn::make('ordered_kg')->visibleFrom('md')->label('Ordered (kg)')->numeric(),
+                Tables\Columns\TextColumn::make('delivered_kg')->visibleFrom('md')->label('Delivered (kg)')->numeric()->default(0),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
                     ->state(fn (DeliveryOrder $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (DeliveryOrder $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
-                Tables\Columns\TextColumn::make('scheduled_at')->label('Scheduled')->dateTime('d M H:i')->placeholder('—')->sortable(),
+                Tables\Columns\TextColumn::make('scheduled_at')->visibleFrom('md')->label('Scheduled')->dateTime('d M H:i')->placeholder('—')->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
