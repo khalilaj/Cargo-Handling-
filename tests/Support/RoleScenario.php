@@ -13,6 +13,7 @@ use App\Domain\Operations\Actions\AdvanceOrderStatus;
 use App\Domain\Operations\Actions\RecordTruckLoad;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
+use App\Models\AuditLog;
 use App\Models\Berth;
 use App\Models\CargoMovement;
 use App\Models\CorrectionRequest;
@@ -150,6 +151,7 @@ trait RoleScenario
             'truck-visits' => TruckVisit::first()->id,
             'tanks' => Tank::first()->id,
             'correction-requests' => CorrectionRequest::first()->id,
+            'audit-logs' => AuditLog::first()->id,
             'users' => User::first()->id,
             'vessels' => Vessel::first()->id,
             'berths' => Berth::first()->id,

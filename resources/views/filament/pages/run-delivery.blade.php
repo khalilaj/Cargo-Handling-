@@ -34,7 +34,23 @@
 
             @case ('trucks')
                 <h2>Trucks</h2>
-                <p class="bs-panel-lead">Take each truck through the gate, the weighbridge and the loading bay. When one has left, gate in the next, or finish the order.</p>
+                @if ($delivered > 0 && $remaining <= 0)
+                    <div class="bs-finish" role="status">
+                        <div>
+                            <strong>All {{ number_format($ordered) }} kg is loaded.</strong>
+                            @if ($onSite->isEmpty())
+                                <span>No trucks are left on site. Finish the order to close it.</span>
+                            @else
+                                <span>Gate out the {{ $onSite->count() === 1 ? 'last truck' : 'trucks' }} still on site, then finish the order.</span>
+                            @endif
+                        </div>
+                        @if ($onSite->isEmpty())
+                            <x-filament::button size="lg" :disabled="$readOnly" wire:click="finishOrder" wire:loading.attr="disabled" wire:target="finishOrder">Finish the order</x-filament::button>
+                        @endif
+                    </div>
+                @else
+                    <p class="bs-panel-lead">Take each truck through the gate, the weighbridge and the loading bay. When one has left, gate in the next, or finish the order.</p>
+                @endif
 
                 @if ($onSite->isNotEmpty())
                     <ul class="bs-lane" aria-label="Trucks on site">
@@ -135,7 +151,7 @@
                     @if ($lane !== 'gate-in')
                         <x-filament::button color="gray" type="button" wire:click="startGateIn">Gate in another truck</x-filament::button>
                     @endif
-                    <x-filament::button color="gray" type="button" wire:click="finishOrder">Finish the order</x-filament::button>
+                    <x-filament::button :color="$delivered > 0 ? 'primary' : 'gray'" :size="$delivered > 0 ? 'lg' : 'md'" type="button" wire:click="finishOrder">Finish the order</x-filament::button>
                 </div>
                 @break
 

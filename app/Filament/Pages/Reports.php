@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Domain\Reporting\CsvExport;
 use App\Domain\Reporting\DeliveryFulfilmentReport;
+use App\Domain\Reporting\ReportCharts;
 use App\Domain\Reporting\StockPositionReport;
 use App\Domain\Reporting\VesselReconciliationReport;
 use App\Http\Controllers\ReportPdfController;
@@ -53,10 +54,15 @@ class Reports extends Page
     {
         [$f, $u] = $this->period();
 
+        $stock = app(StockPositionReport::class)($f, $u);
+        $vessels = app(VesselReconciliationReport::class)($f, $u);
+        $orders = app(DeliveryFulfilmentReport::class)($f, $u);
+
         return [
-            'stock' => app(StockPositionReport::class)($f, $u),
-            'vessels' => app(VesselReconciliationReport::class)($f, $u),
-            'orders' => app(DeliveryFulfilmentReport::class)($f, $u),
+            'stock' => $stock,
+            'vessels' => $vessels,
+            'orders' => $orders,
+            'charts' => app(ReportCharts::class)($stock, $vessels, $orders),
             'pdfUrl' => route('reports.pdf', ['from' => $f->toDateString(), 'until' => $u->toDateString()]),
         ];
     }

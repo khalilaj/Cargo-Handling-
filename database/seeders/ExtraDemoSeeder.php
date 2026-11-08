@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Access\Role;
 use App\Domain\Cargo\Actions\RecordTruckDelivery;
 use App\Domain\Cargo\Actions\RecordVesselDischarge;
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Fleet\Actions\TruckVisitWorkflow;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\Berth;
@@ -15,6 +17,7 @@ use App\Models\Driver;
 use App\Models\Tank;
 use App\Models\Transporter;
 use App\Models\Truck;
+use App\Models\User;
 use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use Illuminate\Database\Seeder;
@@ -112,7 +115,7 @@ class ExtraDemoSeeder extends Seeder
     {
         // Already seeded, or the database holds one of these refs for another reason: leave the voyages alone
         // rather than crash the boot on the unique voyage_ref constraint.
-        $refs = ['VOY-2610-01', 'VOY-2610-02', 'VOY-2611-06', 'VOY-2611-07', 'VOY-2611-08'];
+        $refs = ['VOY-2610-01', 'VOY-2610-02', 'VOY-2611-06', 'VOY-2611-07', 'VOY-2611-08', 'VOY-2611-09'];
         if (VesselDischarge::whereIn('voyage_ref', $refs)->exists()) {
             return;
         }
@@ -149,6 +152,15 @@ class ExtraDemoSeeder extends Seeder
         $link('xseed-in-3a', ['vessel_discharge_id' => $v3->id]);
         $link('xseed-in-3b', ['vessel_discharge_id' => $v3->id]);
 
+        // ---- a ship pumping into a tank at B3; B4 stays free so a scheduled ship can be berthed in the demo ----
+        $alongside = fn (VesselDischarge $v) => $v->update(['active_berth_id' => $v->berth_id, 'active_vessel_id' => $v->vessel_id]);
+        $v4 = $voyage(['voyage_ref' => 'VOY-2611-09', 'vessel_name' => 'MV Lamu Express', 'commodity' => Commodity::CPO,
+            'bl_quantity_kg' => 3_200_000, 'status' => DischargeStatus::Discharging, 'berth_id' => $berth('B3'),
+            'eta' => '2026-11-08 05:00', 'berthed_at' => '2026-11-08 06:00', 'started_at' => '2026-11-08 07:00']);
+        $alongside($v4);
+        $in($tank('CPO-02'), 1_100_000, $d('2026-11-08 09:00'), 'xseed-in-4a', 'MV Lamu Express');
+        $link('xseed-in-4a', ['vessel_discharge_id' => $v4->id]);
+
         // ---- ships still to come: free berths B3 and B4 are waiting for them ----
         $voyage(['voyage_ref' => 'VOY-2611-07', 'vessel_name' => 'MV Kilindini Star', 'commodity' => Commodity::CPO,
             'bl_quantity_kg' => 2_500_000, 'status' => DischargeStatus::Scheduled, 'eta' => '2026-11-10 10:00']);
@@ -171,7 +183,33 @@ class ExtraDemoSeeder extends Seeder
         // ---- orders waiting to be opened, for the delivery wizard ----
         $order(['order_ref' => 'ORD-1009', 'customer' => 'Pwani Oil Products', 'commodity' => Commodity::CPOL, 'ordered_kg' => 500_000,
             'status' => OrderStatus::Pending, 'scheduled_at' => '2026-11-09 08:00']);
+        $loading = $order(['order_ref' => 'ORD-1011', 'customer' => 'Golden Africa Foods', 'commodity' => Commodity::CPO, 'ordered_kg' => 400_000,
+            'status' => OrderStatus::Loading, 'scheduled_at' => '2026-11-08 08:00', 'started_at' => '2026-11-08 08:30']);
         $order(['order_ref' => 'ORD-1010', 'customer' => 'Capwell Industries', 'commodity' => Commodity::CPO, 'ordered_kg' => 350_000,
             'status' => OrderStatus::Pending, 'scheduled_at' => '2026-11-10 09:00']);
+        $this->seedTrucksOnSite($loading);
+    }
+
+    /** Four more trucks at the gate, one at each stage, through the real workflow. Nothing is booked out of a tank. */
+    private function seedTrucksOnSite(DeliveryOrder $loading): void
+    {
+        $operator = User::where('role', Role::Operator->value)->first();
+        if (! $operator) {
+            return;
+        }
+
+        $flow = app(TruckVisitWorkflow::class);
+        $truck = fn (string $plate) => Truck::where('plate', $plate)->firstOrFail();
+        $order = fn (string $ref) => DeliveryOrder::where('order_ref', $ref)->firstOrFail();
+
+        auth()->setUser($operator);
+        try {
+            $flow->gateIn($order('ORD-1009'), $truck('KDB 118Q'));                                   // just arrived
+            $flow->weighIn($flow->gateIn($order('ORD-1010'), $truck('KDE 055V')), 14_800);            // weighed in, waiting for its order
+            $flow->startLoading($flow->weighIn($flow->gateIn($loading, $truck('KCY 227U')), 13_400)); // on the loading bay
+            $flow->gateIn($loading, $truck('KDC 702R'));                                            // second truck queued for the same order
+        } finally {
+            auth()->forgetGuards();
+        }
     }
 }

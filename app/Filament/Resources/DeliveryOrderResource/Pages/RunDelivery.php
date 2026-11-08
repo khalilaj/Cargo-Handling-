@@ -23,6 +23,7 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -189,13 +190,17 @@ class RunDelivery extends Page
 
     public function weighInForm(Schema $schema): Schema
     {
-        return $schema->statePath('weighInData')->disabled(fn () => ! $this->canOperate())->components([self::weight('Weighbridge reading (kg)', 'The truck is empty.')]);
+        return $schema->statePath('weighInData')->disabled(fn () => ! $this->canOperate())->components([
+            self::weight('Weighbridge reading (kg)', 'The truck is empty.'),
+            $this->weightChipsComponent('in'),
+        ]);
     }
 
     public function weighOutForm(Schema $schema): Schema
     {
         return $schema->statePath('weighOutData')->disabled(fn () => ! $this->canOperate())->components([
             self::weight('Weighbridge reading (kg)', 'Full truck. It is compared with what was booked out of the tanks.'),
+            $this->weightChipsComponent('out'),
         ]);
     }
 
@@ -232,6 +237,36 @@ class RunDelivery extends Page
     protected function quantityStatePath(): string
     {
         return 'loadData';
+    }
+
+    /** Quick amounts for the weighbridge readings, the same buttons as the quantity fields: the truck's usual empty weight, and empty plus what was loaded. */
+    public function weightChips(string $which): array
+    {
+        $visit = $this->currentVisit($this->onSite());
+        if ($visit === null) {
+            return [];
+        }
+
+        return match ($which) {
+            'in' => $visit->truck?->tare_kg ? [['label' => 'Usual empty weight', 'kg' => (int) $visit->truck->tare_kg]] : [],
+            'out' => $visit->weigh_in_kg && $visit->loadedKg() > 0 ? [['label' => 'Empty + loaded', 'kg' => $visit->weigh_in_kg + $visit->loadedKg()]] : [],
+            default => [],
+        };
+    }
+
+    /** Only a reading that is on offer right now can be set, and only by someone who may press the step. */
+    public function setWeight(string $which, int $kg): void
+    {
+        abort_unless($this->canOperate(), 403);
+        abort_unless(in_array($kg, array_column($this->weightChips($which), 'kg'), true), 422);
+
+        data_set($this, $which === 'in' ? 'weighInData.kg' : 'weighOutData.kg', $kg);
+    }
+
+    private function weightChipsComponent(string $which): View
+    {
+        return View::make('filament.components.quantity-chips')
+            ->viewData(fn () => ['chips' => $this->weightChips($which), 'enabled' => $this->canOperate(), 'action' => 'setWeight', 'which' => $which]);
     }
 
     private static function weight(string $label, string $help): Forms\Components\TextInput

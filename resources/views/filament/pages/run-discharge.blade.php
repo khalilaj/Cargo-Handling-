@@ -47,9 +47,9 @@
                     {{ $this->pumpForm }}
                     <div class="bs-panel-actions">
                         <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="pump">Pump into tank</x-filament::button>
-                        <x-filament::button color="gray" wire:click="finishPumping" type="button">
-                            {{ $fullyIn ? 'Finish pumping' : 'Finish pumping early' }}
-                        </x-filament::button>
+                        @if ($fullyIn)
+                            <x-filament::button color="gray" wire:click="finishPumping" type="button">Finish pumping</x-filament::button>
+                        @endif
                     </div>
                 </form>
                 @include('filament.components.pump-list', ['pumps' => $pumps])
@@ -58,7 +58,7 @@
             @case ('complete')
                 <h2>Complete the voyage</h2>
                 @if ($fullyIn)
-                    <p class="bs-panel-lead">{{ number_format($gross) }} kg received, {{ number_format($loss) }} kg lost in transit, {{ number_format($net) }} kg in the tanks. Press Complete to close the voyage.</p>
+                    <p class="bs-panel-lead">{{ number_format($net) }} kg received in the tanks, after {{ number_format($loss) }} kg lost in transit ({{ number_format($gross) }} kg was pumped from the ship). Press Complete to close the voyage.</p>
                 @else
                     <p class="bs-panel-lead">Less than 99% of the bill of lading is in, so only a supervisor can close it, with a written reason that is kept on the voyage. Otherwise go back and pump the rest.</p>
                 @endif

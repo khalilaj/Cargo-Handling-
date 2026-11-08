@@ -7,7 +7,10 @@ use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\RecordDischargeIntoTank;
 use App\Domain\Operations\Enums\DischargeStatus;
+use App\Filament\Resources\AuditLogResource;
 use App\Filament\Resources\AuditLogResource\Pages\ListAuditLogs;
+use App\Filament\Resources\AuditLogResource\Pages\ViewAuditLog;
+use App\Filament\Resources\TankResource;
 use App\Models\AuditLog;
 use App\Models\CargoMovement;
 use App\Models\Tank;
@@ -192,5 +195,63 @@ class AuditTest extends TestCase
         $original = CargoMovement::where('idempotency_key', 'seed-6')->first();
         app(TankLedger::class)->reverse($original, now()->addMinute(), 'rev-test');
         $this->assertStringContainsString("reversal of #{$original->id}", AuditLog::where('event', 'cargo_movement.created')->latest('id')->first()->description);
+    }
+
+    public function test_the_audit_table_reads_changes_and_links_to_the_record(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->login(Role::Auditor);
+        $tank = Tank::where('code', 'CPO-01')->first();
+        $tank->update(['capacity_kg' => 5_500_000]);
+
+        Livewire::test(ListAuditLogs::class)
+            ->filterTable('event', 'tank.updated')
+            ->assertSee('Capacity kg: 5000000 → 5500000')
+            ->assertSee('CPO-01')
+            ->assertSee(TankResource::getUrl('view', ['record' => $tank]));
+    }
+
+    public function test_the_audit_table_says_who_and_what_for_creations_and_password_changes(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->login(Role::Admin);
+        User::where('role', 'operator')->first()->update(['password' => 'a-brand-new-secret']);
+
+        Livewire::test(ListAuditLogs::class)
+            ->filterTable('event', 'user.password_changed')
+            ->assertSee('Password changed')
+            ->assertSee('value not recorded');
+
+        Livewire::test(ListAuditLogs::class)
+            ->filterTable('event', 'tank.created')
+            ->assertSee('System');
+    }
+
+    public function test_a_deleted_record_is_named_without_a_broken_link(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->login(Role::Admin);
+        $temp = User::factory()->create(['role' => 'operator']);
+        $id = $temp->id;
+        $temp->delete();
+
+        Livewire::test(ListAuditLogs::class)
+            ->filterTable('event', 'user.deleted')
+            ->assertSee("#{$id}")
+            ->assertDontSee(route('filament.admin.resources.users.index').'/'.$id);
+    }
+
+    public function test_the_entry_page_shows_the_changes_as_a_list(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->login(Role::Supervisor);
+        Tank::where('code', 'CPO-01')->first()->update(['capacity_kg' => 5_500_000]);
+        $log = AuditLog::where('event', 'tank.updated')->latest('id')->first();
+
+        $this->get(AuditLogResource::getUrl('view', ['record' => $log]))->assertOk();
+
+        Livewire::test(ViewAuditLog::class, ['record' => $log->getKey()])
+            ->assertSee('Capacity kg: 5000000 → 5500000')
+            ->assertDontSee('old_values');
     }
 }

@@ -141,18 +141,16 @@ class RoleViewsTest extends TestCase
         $live = ['StockOverview', 'TankGauges', 'TrucksOnSite', 'VesselsInPort'];
         $analytics = ['InventoryTrend', 'RecentMovements'];
 
-        $guide = ['WorkflowGuide'];   // the how-to-work guide, for roles that do the work
-
         $this->login(Role::Operator);
-        $this->assertSame(collect([...$live, ...$guide])->sort()->values()->all(), $shown(), 'operators get the live boards and the guide');
+        $this->assertSame(collect([...$live])->sort()->values()->all(), $shown(), 'operators get the live boards');
 
         foreach ([Role::Supervisor, Role::Admin] as $role) {
             $this->login($role);
-            $this->assertSame(collect([...$live, ...$analytics, ...$guide])->sort()->values()->all(), $shown(), "{$role->value} also gets the trends");
+            $this->assertSame(collect([...$live, ...$analytics])->sort()->values()->all(), $shown(), "{$role->value} also gets the trends");
         }
 
         $this->login(Role::Auditor);
-        $this->assertSame(collect([...$live, ...$analytics])->sort()->values()->all(), $shown(), 'auditors read only, so no guide');
+        $this->assertSame(collect([...$live, ...$analytics])->sort()->values()->all(), $shown(), 'auditors get the same boards and the trends');
     }
 
     public function test_needs_attention_is_no_longer_a_dashboard_widget(): void

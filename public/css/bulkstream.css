@@ -192,3 +192,28 @@ html.dark .bs-chip-btn:hover:not(:disabled) { border-color: #6f95a3; background:
 }
 html.dark .bs-step-count, html.dark .bs-more-btn { color: #f0efea; }
 @media (max-width: 640px) { html.dark .bs-panel-actions:not(.bs-panel-foot) { background: #12242f; border-color: rgba(255,255,255,.12); } }
+
+/* Reports page visuals */
+.bs-rc-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.bs-rc-card { background: #fff; border: 1px solid rgba(21,48,55,.15); border-radius: .75rem; padding: 1rem; min-width: 0; }
+.bs-rc-card h3 { font-family: Montserrat, sans-serif; font-weight: 700; font-size: .95rem; color: #153037; margin: 0 0 .75rem; }
+.bs-rc-row { margin-bottom: .7rem; }
+.bs-rc-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .1rem .75rem; font-family: Mulish, sans-serif; font-size: .8rem; color: #1B2F36; margin-bottom: .25rem; }
+.bs-rc-label span:first-child { font-weight: 700; overflow-wrap: anywhere; }
+.bs-rc-track { display: flex; height: .8rem; width: 100%; background: #F0EFEA; border-radius: 999px; overflow: hidden; }
+.bs-rc-fill { display: block; height: 100%; background: #153037; }
+.bs-rc-loss { display: block; height: 100%; background: #d98a12; }
+.bs-rc-key { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem; font-size: .75rem; color: #1B2F36; margin: .5rem 0 0; }
+.bs-rc-key i { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; border: 1px solid rgba(21,48,55,.2); }
+.bs-rc-empty { font-family: Mulish, sans-serif; font-size: .9rem; color: #1B2F36; opacity: .75; margin: 0; }
+html.dark .bs-rc-card { background: #12242f; border-color: rgba(255,255,255,.12); }
+html.dark .bs-rc-card h3, html.dark .bs-rc-label, html.dark .bs-rc-key, html.dark .bs-rc-empty { color: #f0efea; }
+html.dark .bs-rc-track { background: rgba(240,239,234,.15); }
+html.dark .bs-rc-fill { background: #F0EFEA; }
+
+/* Finish-the-order callout: shown once everything ordered has been loaded */
+.bs-finish { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; padding: 1rem 1.1rem; margin: .25rem 0 1rem; border: 2px solid var(--bs-ink, #153037); border-left-width: 8px; border-radius: .6rem; background: rgba(21,48,55,.06); }
+.bs-finish div { display: flex; flex-direction: column; gap: .15rem; }
+.bs-finish strong { font-family: var(--bs-heading); font-size: 1.05rem; }
+.bs-finish span { font-size: .9rem; }
+html.dark .bs-finish { border-color: #f0efea; background: rgba(240,239,234,.08); }

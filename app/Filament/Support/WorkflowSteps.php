@@ -62,7 +62,7 @@ class WorkflowSteps
             DischargeStatus::Berthed => 'Next: press "Start discharge" when pumping begins.',
             DischargeStatus::Discharging => $d->isFullyDischarged()
                 ? 'Next: the cargo is in. Press "Finish pumping" and then "Complete voyage".'
-                : 'Next: press "Pump into tank" for each tank you fill. The 0.5% transit loss is taken off automatically. At 99% or more, press "Finish pumping" and then "Complete voyage". Below that only a supervisor can close it, with a written reason.',
+                : 'Next: press "Pump into tank" for each tank you fill. The 0.5% transit loss is taken off automatically. When the whole bill of lading is in, press "Finish pumping" and then "Complete voyage".',
             DischargeStatus::Completed => 'Done. Everything pumped is in the tanks, and the transit loss is recorded below.',
             DischargeStatus::Cancelled => 'This voyage was cancelled. Nothing more can be done on it.',
         };

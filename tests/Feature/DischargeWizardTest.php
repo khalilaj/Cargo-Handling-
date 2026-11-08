@@ -91,7 +91,8 @@ class DischargeWizardTest extends TestCase
         $pfad = Tank::where('code', 'PFAD-01')->firstOrFail();
 
         $wizard = $this->pump($this->wizard($v), $pfad->id, 300_000, 'wiz-2')->assertNotified('Cargo pumped into tank');
-        $wizard->call('finishPumping')->assertSee('Press Complete')->call('complete')->assertNotified('Voyage completed');
+        $wizard->call('finishPumping')->assertSee('Press Complete')->assertSee('kg received in the tanks, after')->assertSee('kg lost in transit (')->assertSee('kg was pumped from the ship)')
+            ->call('complete')->assertNotified('Voyage completed');
 
         $this->assertSame(DischargeStatus::Completed, $v->fresh()->status);
         $this->assertNull($v->fresh()->completion_note);
@@ -164,7 +165,7 @@ class DischargeWizardTest extends TestCase
         $expect = [
             'VOY-2611-05' => ['Berth the ship', 'Mark berthed and continue'],
             'VOY-2611-04' => ['Start the discharge', 'Start discharge'],
-            'VOY-2611-03' => ['Pump into a tank', 'Pump into tank', 'Finish pumping early'],
+            'VOY-2611-03' => ['Pump into a tank', 'Pump into tank'],
             'VOY-2611-01' => ['Voyage complete'],
         ];
 
@@ -175,6 +176,7 @@ class DischargeWizardTest extends TestCase
                 foreach ($texts as $text) {
                     $wizard->assertSee($text, escape: true);
                 }
+                $wizard->assertDontSee('Finish pumping early');
             }
         }
     }

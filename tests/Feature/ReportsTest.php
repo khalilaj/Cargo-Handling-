@@ -7,6 +7,7 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Cargo\Services\TankLedger;
 use App\Domain\Reporting\CsvExport;
 use App\Domain\Reporting\DeliveryFulfilmentReport;
+use App\Domain\Reporting\ReportCharts;
 use App\Domain\Reporting\StockPositionReport;
 use App\Domain\Reporting\VesselReconciliationReport;
 use App\Filament\Pages\Reports;
@@ -200,6 +201,40 @@ class ReportsTest extends TestCase
         Livewire::test(Reports::class)
             ->set('from', '2026-10-01')->set('until', '2026-12-31')
             ->assertSee('3,829,000')->assertSee('VOY-2611-03')->assertSee('ORD-1003')->assertSee('reconciles');
+    }
+
+    public function test_charts_show_for_the_period_and_an_empty_state_when_there_is_no_data(): void
+    {
+        $this->login(Role::Supervisor);
+
+        Livewire::test(Reports::class)->set('from', '2026-10-01')->set('until', '2026-12-31')
+            ->assertSee('Stock against tank capacity')->assertSee('Received and transit loss per voyage')
+            ->assertSee('Ordered against delivered')
+            ->assertDontSee('No movements in this period');
+
+        Livewire::test(Reports::class)->set('from', '2020-01-01')->set('until', '2020-01-31')
+            ->assertSee('No movements in this period')->assertDontSee('Stock against tank capacity');
+    }
+
+    public function test_chart_bars_are_bounded_percentages(): void
+    {
+        $f = Carbon::parse('2026-10-01');
+        $u = Carbon::parse('2026-12-31');
+        $charts = (new ReportCharts)(
+            (new StockPositionReport)($f, $u), (new VesselReconciliationReport)($f, $u), (new DeliveryFulfilmentReport)($f, $u));
+
+        $this->assertTrue($charts['hasData']);
+        $this->assertCount(3, $charts['stock']);
+        foreach ($charts['stock'] as $b) {
+            $this->assertGreaterThanOrEqual(0, $b['pct']);
+            $this->assertLessThanOrEqual(100, $b['pct']);
+        }
+        foreach ($charts['orders'] as $b) {
+            $this->assertLessThanOrEqual(100, $b['pct']);
+        }
+        foreach ($charts['vessels'] as $b) {
+            $this->assertLessThanOrEqual(100.0001, $b['net_pct'] + $b['loss_pct'] + $b['outstanding_pct']);
+        }
     }
 
     public function test_bad_or_swapped_dates_are_repaired_not_an_error(): void

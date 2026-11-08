@@ -124,6 +124,60 @@ class QuantityChipsTest extends TestCase
         $this->assertSame($visit->truck->capacity_kg, $visit->fresh()->loadedKg());
     }
 
+    public function test_weighbridge_fields_get_the_same_quick_buttons(): void
+    {
+        $this->seedWithEdgeStates();
+        $this->loginAs(Role::Operator);
+        $order = DeliveryOrder::where('order_ref', 'ORD-1003')->firstOrFail();
+
+        // Weigh-in: the truck's usual empty weight.
+        $arrived = TruckVisit::whereHas('truck', fn ($q) => $q->where('plate', 'KCB 887L'))->latest('id')->firstOrFail();
+        $arrived->truck->update(['tare_kg' => 14_200]);
+        $wizard = Livewire::test(RunDelivery::class, ['record' => $order->id])->call('selectVisit', $arrived->id);
+        $this->assertSame([['label' => 'Usual empty weight', 'kg' => 14_200]], $wizard->instance()->weightChips('in'));
+        $wizard->assertSee('Usual empty weight')->call('setWeight', 'in', 14_200)->assertSet('weighInData.kg', 14_200)
+            ->call('weighIn')->assertNotified('Weighed in');
+
+        // Weigh-out: empty plus what was loaded.
+        $loading = TruckVisit::whereHas('truck', fn ($q) => $q->where('plate', 'KCD 452M'))->latest('id')->firstOrFail();
+        $cpol = Tank::where('code', 'CPOL-01')->firstOrFail();
+        $wizard = Livewire::test(RunDelivery::class, ['record' => $order->id])->call('selectVisit', $loading->id)->set('loadData.tank_id', $cpol->id);
+        $this->assertSame([], $wizard->instance()->weightChips('out'));                              // nothing loaded onto this truck yet
+        $wizard->call('setQuantity', $wizard->instance()->quantityChips()[0]['kg'])->call('load')->assertNotified('Loaded');
+        $expected = $loading->weigh_in_kg + $loading->fresh()->loadedKg();
+        $this->assertSame([['label' => 'Empty + loaded', 'kg' => $expected]], $wizard->instance()->weightChips('out'));
+        $wizard->call('setWeight', 'out', $expected)->assertSet('weighOutData.kg', $expected)->call('weighOut')->assertNotified('Weighed out');
+    }
+
+    public function test_a_weight_that_is_not_on_offer_is_refused_and_read_only_roles_cannot_press_it(): void
+    {
+        $this->seedWithEdgeStates();
+        $order = DeliveryOrder::where('order_ref', 'ORD-1003')->firstOrFail();
+
+        $this->loginAs(Role::Operator);
+        Livewire::test(RunDelivery::class, ['record' => $order->id])->call('setWeight', 'in', 1)->assertStatus(422);
+
+        $this->loginAs(Role::Auditor);
+        Livewire::test(RunDelivery::class, ['record' => $order->id])->call('setWeight', 'in', 1)->assertForbidden();
+    }
+
+    public function test_finish_the_order_is_called_out_once_everything_is_loaded(): void
+    {
+        $this->seedWithEdgeStates();
+        $this->loginAs(Role::Operator);
+        $order = DeliveryOrder::where('order_ref', 'ORD-1003')->firstOrFail();
+
+        Livewire::test(RunDelivery::class, ['record' => $order->id])->assertDontSee('is loaded.');   // still 250,000 kg to go
+
+        $order->update(['ordered_kg' => $order->deliveredKg()]);                                      // now everything ordered is loaded
+        Livewire::test(RunDelivery::class, ['record' => $order->id])
+            ->assertSee('is loaded.')->assertSee('then finish the order')->assertSee('bs-finish', false);
+
+        TruckVisit::where('delivery_order_id', $order->id)->update(['status' => 'departed', 'active_truck_id' => null]);        // and every truck has left
+        Livewire::test(RunDelivery::class, ['record' => $order->id])
+            ->assertSee('No trucks are left on site. Finish the order to close it.')->assertSee('Finish the order');
+    }
+
     public function test_the_wizards_carry_the_phone_first_markup(): void
     {
         $this->seedWithEdgeStates();

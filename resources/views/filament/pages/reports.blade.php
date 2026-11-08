@@ -13,6 +13,8 @@
         </div>
     </x-filament::section>
 
+    @include('filament.pages.partials.report-charts')
+
     @php $cell = 'padding:8px 10px;border-bottom:1px solid rgba(128,128,128,.25);'; $num = $cell . 'text-align:right;font-variant-numeric:tabular-nums;'; $head = 'padding:8px 10px;text-align:left;font-size:12px;opacity:.7;border-bottom:2px solid rgba(128,128,128,.35);'; @endphp
 
     <x-filament::section heading="Stock position (kg)" description="closing = opening + discharged − transit loss − delivered">

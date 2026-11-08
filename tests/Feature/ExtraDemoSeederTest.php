@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Models\Berth;
@@ -12,6 +13,7 @@ use App\Models\Driver;
 use App\Models\Tank;
 use App\Models\Transporter;
 use App\Models\Truck;
+use App\Models\TruckVisit;
 use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
@@ -40,7 +42,7 @@ class ExtraDemoSeederTest extends TestCase
         $this->seed(ExtraDemoSeeder::class);
 
         // tanks, berths, vessels, customers, transporters, trucks, drivers, voyages, orders, ledger rows
-        $this->assertSame([8, 4, 9, 8, 4, 10, 7, 10, 10, 15], $this->counts());     // ledger: 6 base rows + 5 pumped in + 4 loaded out
+        $this->assertSame([8, 4, 9, 8, 4, 10, 7, 11, 11, 16], $this->counts());     // ledger: 6 base rows + 6 pumped in + 4 loaded out
     }
 
     public function test_running_it_again_changes_nothing(): void
@@ -53,6 +55,18 @@ class ExtraDemoSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame($once, $this->counts());
+    }
+
+    public function test_the_yard_has_ships_alongside_and_trucks_on_site(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->seed(ExtraDemoSeeder::class);
+
+        $inPort = VesselDischarge::whereIn('status', [DischargeStatus::Berthed->value, DischargeStatus::Discharging->value])->count();
+        $onSite = TruckVisit::whereNotIn('status', [VisitStatus::Departed->value, VisitStatus::Cancelled->value])->count();
+
+        $this->assertSame(3, $inPort);            // B1, B2 from the base demo and B3 pumping; B4 stays free
+        $this->assertSame(7, $onSite);            // 3 from the base demo + 4 more at the gate
     }
 
     public function test_it_does_not_crash_when_a_voyage_reference_is_already_taken(): void
@@ -126,6 +140,6 @@ class ExtraDemoSeederTest extends TestCase
 
         $free = Berth::where('active', true)->get()->filter(fn (Berth $b) => $b->occupant() === null)->pluck('code')->sort()->values()->all();
 
-        $this->assertSame(['B3', 'B4'], $free);
+        $this->assertSame(['B4'], $free);
     }
 }

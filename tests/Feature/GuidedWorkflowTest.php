@@ -11,12 +11,12 @@ use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
 use App\Filament\Support\WizardFields;
 use App\Filament\Support\WorkflowSteps;
-use App\Filament\Widgets\WorkflowGuide;
 use App\Models\DeliveryOrder;
 use App\Models\TruckVisit;
 use App\Models\User;
 use App\Models\VesselDischarge;
 use Database\Seeders\DatabaseSeeder;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -90,21 +90,11 @@ class GuidedWorkflowTest extends TestCase
             ->assertSee('Completed');
     }
 
-    public function test_dashboard_guide_is_for_people_who_operate_and_links_each_step(): void
+    public function test_dashboard_has_no_how_to_guide_for_any_role(): void
     {
-        $this->assertTrue(WorkflowGuide::canView());
-        Livewire::test(WorkflowGuide::class)
-            ->assertSee('How the terminal works')
-            ->assertSee('Set up your registers')
-            ->assertSee('Schedule a ship')
-            ->assertSee('Run the discharge')
-            ->assertSee('Take a delivery order')
-            ->assertSee('Move the trucks')
-            ->assertSee('Check the numbers')
-            ->assertSee('/admin/vessel-discharges/create', false);
+        $widgets = collect(Filament::getPanel('admin')->getWidgets())->map(fn (string $w) => class_basename($w));
 
-        $this->actingAs(User::where('role', 'auditor')->first());
-        $this->assertFalse(WorkflowGuide::canView());
+        $this->assertFalse($widgets->contains('WorkflowGuide'));
     }
 
     public function test_screens_carry_no_tip_banners(): void

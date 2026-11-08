@@ -65,6 +65,7 @@ class AccessMatrixTest extends TestCase
             // Reports and administration
             'filament.admin.pages.reports' => self::OVERSEERS,
             'filament.admin.resources.audit-logs.index' => self::OVERSEERS,
+            'filament.admin.resources.audit-logs.view' => self::OVERSEERS,
             'filament.admin.resources.users.index' => self::ADMIN,
             'filament.admin.resources.users.create' => self::ADMIN,
             'filament.admin.resources.users.edit' => self::ADMIN,
