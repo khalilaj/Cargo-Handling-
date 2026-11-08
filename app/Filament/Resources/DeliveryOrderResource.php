@@ -6,11 +6,10 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use BackedEnum;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
@@ -106,7 +105,7 @@ class DeliveryOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(OrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ActionGroup::make(OperationActions::order())]);
+            ->recordActions([ViewAction::make(), ContinueAction::make(static::class)]);
     }
 
     public static function getRelations(): array
@@ -120,6 +119,7 @@ class DeliveryOrderResource extends Resource
             'index' => Pages\ListDeliveryOrders::route('/'),
             'create' => Pages\CreateDeliveryOrder::route('/create'),
             'view' => Pages\ViewDeliveryOrder::route('/{record}'),
+            'run' => Pages\RunDelivery::route('/{record}/run'),
         ];
     }
 }

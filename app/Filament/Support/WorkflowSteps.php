@@ -29,15 +29,40 @@ class WorkflowSteps
         };
     }
 
+    /** What the single forward button says for this record, or null when nothing more can be done. */
+    public static function continueLabel(Model $record): ?string
+    {
+        return match (true) {
+            $record instanceof VesselDischarge => match ($record->status) {
+                DischargeStatus::Scheduled => 'berth the ship',
+                DischargeStatus::Berthed => 'start the discharge',
+                DischargeStatus::Discharging => 'pump or complete',
+                default => null,
+            },
+            $record instanceof DeliveryOrder => match ($record->status) {
+                OrderStatus::Pending => 'open loading',
+                OrderStatus::Loading => 'load trucks or complete',
+                default => null,
+            },
+            $record instanceof TruckVisit => match ($record->status) {
+                VisitStatus::Arrived => 'weigh the truck in',
+                VisitStatus::WeighedIn => 'start loading',
+                VisitStatus::Loading => 'load or weigh out',
+                VisitStatus::WeighedOut => 'gate the truck out',
+                default => null,
+            },
+            default => null,
+        };
+    }
+
     private static function discharge(VesselDischarge $d): array
     {
-        $kg = number_format($d->remainingKg());
         $hint = match ($d->status) {
             DischargeStatus::Scheduled => 'Next: when the ship arrives, press "Mark berthed" and choose a free berth.',
             DischargeStatus::Berthed => 'Next: press "Start discharge" when pumping begins.',
             DischargeStatus::Discharging => $d->isFullyDischarged()
-                ? 'Next: the cargo is in. Press "Complete" to close the voyage.'
-                : "Next: press \"Pump into tank\" for each tank you fill. The 0.5% transit loss is taken off automatically. {$d->progressPercent()}% of the bill of lading is received, {$kg} kg still on the ship. Press \"Complete\" once at least 99% is in. Below that, only a supervisor can close it, with a written reason.",
+                ? 'Next: the cargo is in. Press "Finish pumping" and then "Complete voyage".'
+                : 'Next: press "Pump into tank" for each tank you fill. The 0.5% transit loss is taken off automatically. At 99% or more, press "Finish pumping" and then "Complete voyage". Below that only a supervisor can close it, with a written reason.',
             DischargeStatus::Completed => 'Done. Everything pumped is in the tanks, and the transit loss is recorded below.',
             DischargeStatus::Cancelled => 'This voyage was cancelled. Nothing more can be done on it.',
         };
@@ -53,10 +78,10 @@ class WorkflowSteps
     {
         $kg = number_format($o->remainingKg());
         $hint = match ($o->status) {
-            OrderStatus::Pending => 'Next: press "Start loading" when trucks can begin. Gate each truck in under Operations, Truck visits.',
+            OrderStatus::Pending => 'Next: press "Start loading" to open the order for trucks.',
             OrderStatus::Loading => $o->remainingKg() > 0
-                ? "Next: for each truck in the loading bay, press \"Load truck\" and choose a tank. {$kg} kg still to load. Press \"Complete\" when the order is delivered."
-                : 'Next: the full quantity is loaded. Press "Complete" to close the order.',
+                ? "Next: gate a truck in, weigh it, load it from a tank, weigh it out and gate it out. Repeat for each truck. {$kg} kg still to load. Then finish the order."
+                : 'Next: the full quantity is loaded. Once every truck has left, finish the order and press "Complete order".',
             OrderStatus::Completed => 'Done. The order is fully delivered and closed.',
             OrderStatus::Cancelled => 'This order was cancelled. Nothing more can be done on it.',
         };

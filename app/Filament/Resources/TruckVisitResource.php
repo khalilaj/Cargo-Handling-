@@ -5,10 +5,9 @@ namespace App\Filament\Resources;
 use App\Domain\Fleet\Enums\VisitStatus;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\TruckVisitResource\Pages;
-use App\Filament\Support\TruckVisitActions;
+use App\Filament\Support\ContinueAction;
 use App\Models\TruckVisit;
 use BackedEnum;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
@@ -115,7 +114,7 @@ class TruckVisitResource extends Resource
                     ->color('warning')->tooltip(fn (TruckVisit $record) => implode("\n", $record->warnings ?? [])),
                 Tables\Columns\TextColumn::make('gate_in_at')->label('Gate in')->dateTime('d M H:i')->sortable(),
             ])
-            ->recordActions([ViewAction::make(), ActionGroup::make(TruckVisitActions::forVisit())]);
+            ->recordActions([ViewAction::make(), ContinueAction::make(DeliveryOrderResource::class, fn ($visit) => DeliveryOrderResource::getUrl('run', ['record' => $visit->delivery_order_id, 'visit' => $visit->id]))]);
     }
 
     public static function getRelations(): array

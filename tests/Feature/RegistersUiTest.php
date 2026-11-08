@@ -10,7 +10,7 @@ use App\Filament\Resources\DeliveryOrderResource\Pages\CreateDeliveryOrder;
 use App\Filament\Resources\TruckResource\Pages\CreateTruck;
 use App\Filament\Resources\TruckResource\Pages\ListTrucks;
 use App\Filament\Resources\VesselDischargeResource\Pages\CreateVesselDischarge;
-use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Resources\VesselResource\Pages\CreateVessel;
 use App\Filament\Resources\VesselResource\Pages\EditVessel;
 use App\Filament\Resources\VesselResource\Pages\ListVessels;
@@ -234,12 +234,12 @@ class RegistersUiTest extends TestCase
         $free = Berth::create(['code' => 'B3', 'name' => 'Berth 3']);
 
         // The occupied berth is not offered, so choosing it fails validation.
-        Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])
-            ->callAction('to_berthed', data: ['berth_id' => $occupied->id])->assertHasActionErrors(['berth_id']);
+        Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->set('berthData.berth_id', $occupied->id)->call('berth')->assertHasErrors(['berthData.berth_id']);
         $this->assertSame(DischargeStatus::Scheduled, $voyage->fresh()->status);
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $voyage->id])
-            ->callAction('to_berthed', data: ['berth_id' => $free->id])->assertNotified('Discharge is now Berthed');
+        Livewire::test(RunDischarge::class, ['record' => $voyage->id])
+            ->set('berthData.berth_id', $free->id)->call('berth')->assertNotified('Ship berthed');
 
         $this->assertSame($free->id, $voyage->fresh()->berth_id);
         $this->assertSame(DischargeStatus::Berthed, $voyage->fresh()->status);

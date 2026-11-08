@@ -67,19 +67,19 @@ class WorkflowGuide extends Widget
             ],
             [
                 'title' => 'Run the discharge',
-                'what' => 'Open the voyage and press Mark berthed, Start discharge, Pump into tank for each tank, then Complete. The 0.5% transit loss is taken off automatically.',
+                'what' => 'Open the voyage and follow its page: berth, start, pump into each tank, complete. The 0.5% transit loss is taken off automatically.',
                 'count' => $inPort.' in port',
                 'links' => $this->linkTo('Vessel discharges', VesselDischargeResource::class),
             ],
             [
                 'title' => 'Take a delivery order',
-                'what' => 'Create an order for a customer, then press Start loading on it. Trucks are loaded against it.',
+                'what' => 'Create an order for a customer. Its page walks you through opening loading, each truck, and completing.',
                 'count' => $openOrders.' open',
                 'links' => $this->linkTo('New delivery order', DeliveryOrderResource::class, 'create', 'canCreate'),
             ],
             [
                 'title' => 'Move the trucks',
-                'what' => 'Gate in, weigh in, start loading, load from a tank, weigh out, gate out. Each visit page shows the next button.',
+                'what' => 'Open the order and follow its page: gate in, weigh in, start loading, load from a tank, weigh out, gate out, then the next truck.',
                 'count' => $trucksOnSite.' on site',
                 'links' => $this->linkTo('Truck visits', TruckVisitResource::class),
             ],

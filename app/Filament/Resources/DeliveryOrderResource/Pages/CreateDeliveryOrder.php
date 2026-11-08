@@ -16,4 +16,10 @@ class CreateDeliveryOrder extends CreateRecord
 
         return $data;
     }
+
+    /** A new order goes straight into the wizard, on its first step. */
+    protected function getRedirectUrl(): string
+    {
+        return DeliveryOrderResource::getUrl('run', ['record' => $this->getRecord()]);
+    }
 }

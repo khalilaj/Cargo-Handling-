@@ -6,11 +6,10 @@ use App\Domain\Cargo\Enums\Commodity;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\VesselDischargeResource\Pages;
-use App\Filament\Support\OperationActions;
+use App\Filament\Support\ContinueAction;
 use App\Models\Vessel;
 use App\Models\VesselDischarge;
 use BackedEnum;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
@@ -115,7 +114,7 @@ class VesselDischargeResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(DischargeStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ActionGroup::make(OperationActions::discharge())]);
+            ->recordActions([ViewAction::make(), ContinueAction::make(static::class)]);
     }
 
     public static function getRelations(): array
@@ -129,6 +128,7 @@ class VesselDischargeResource extends Resource
             'index' => Pages\ListVesselDischarges::route('/'),
             'create' => Pages\CreateVesselDischarge::route('/create'),
             'view' => Pages\ViewVesselDischarge::route('/{record}'),
+            'run' => Pages\RunDischarge::route('/{record}/run'),
         ];
     }
 }

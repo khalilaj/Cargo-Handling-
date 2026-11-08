@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Domain\Fleet\Actions\TruckVisitWorkflow;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
 use App\Filament\Resources\DeliveryOrderResource\Pages\ListDeliveryOrders;
-use App\Filament\Resources\DeliveryOrderResource\Pages\ViewDeliveryOrder;
+use App\Filament\Resources\DeliveryOrderResource\Pages\RunDelivery;
 use App\Filament\Resources\VesselDischargeResource\Pages\ListVesselDischarges;
-use App\Filament\Resources\VesselDischargeResource\Pages\ViewVesselDischarge;
+use App\Filament\Resources\VesselDischargeResource\Pages\RunDischarge;
 use App\Filament\Widgets\InventoryTrend;
 use App\Filament\Widgets\RecentMovements;
 use App\Filament\Widgets\StockOverview;
@@ -76,18 +75,21 @@ class PanelPagesTest extends TestCase
         Livewire::test(AlertsBell::class)->assertSee('PFAD-01 nearly full');
     }
 
-    public function test_operator_can_run_a_vessel_through_the_buttons(): void
+    public function test_operator_can_run_a_vessel_through_the_wizard(): void
     {
         $v = VesselDischarge::where('status', DischargeStatus::Berthed->value)->first();   // VOY-2611-04, CPO
         $cpo = Tank::where('code', 'CPO-02')->first();
 
-        Livewire::test(ListVesselDischarges::class)
-            ->callAction(TestAction::make('to_discharging')->table($v))
-            ->assertNotified('Discharge is now Discharging');
+        Livewire::test(ListVesselDischarges::class)->assertActionVisible(TestAction::make('continue')->table($v));
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->callAction('pump', data: ['tank_id' => $cpo->id, 'quantity_kg' => 1_000_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-1'])
-            ->assertNotified('Cargo pumped into tank');
+        $wizard = Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->assertSee('Start the discharge')
+            ->call('start')->assertNotified('Discharge started');
+
+        $wizard->assertSee('Pump into a tank')
+            ->set('pumpData.tank_id', $cpo->id)->set('pumpData.quantity_kg', 1_000_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'ui-1')
+            ->call('pump')->assertNotified('Cargo pumped into tank');
 
         $this->assertSame(995_000, $cpo->fresh()->current_volume_kg);
         $this->assertSame($v->id, CargoMovement::where('idempotency_key', 'ui-1')->value('vessel_discharge_id'));
@@ -97,18 +99,18 @@ class PanelPagesTest extends TestCase
     {
         $v = VesselDischarge::where('status', DischargeStatus::Berthed->value)->first();
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->assertActionHidden('pump')                    // not discharging yet
-            ->callAction('to_discharging')
-            ->assertActionVisible('pump')                   // appears without a page reload
-            ->assertActionHidden('to_discharging');
+        Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->assertSee('Start the discharge')->assertDontSee('Pump into a tank')    // not discharging yet
+            ->call('start')
+            ->assertSee('Pump into a tank')                                          // the next step appears without a reload
+            ->assertDontSee('Start the discharge');
 
         $o = DeliveryOrder::where('status', OrderStatus::Pending->value)->first();
 
-        Livewire::test(ViewDeliveryOrder::class, ['record' => $o->id])
-            ->assertActionHidden('load')
-            ->callAction('to_loading')
-            ->assertActionVisible('load');
+        Livewire::test(RunDelivery::class, ['record' => $o->id])
+            ->assertSee('Open loading')->assertDontSee('Take each truck')
+            ->call('openLoading')
+            ->assertSee('Take each truck')->assertDontSee('Open loading');
     }
 
     public function test_form_blocks_a_tank_holding_a_different_product(): void
@@ -116,9 +118,10 @@ class PanelPagesTest extends TestCase
         $v = VesselDischarge::where('status', DischargeStatus::Discharging->value)->first();   // PFAD
         $cpo = Tank::where('code', 'CPO-02')->first();
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->callAction('pump', data: ['tank_id' => $cpo->id, 'quantity_kg' => 10_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-2'])
-            ->assertHasActionErrors(['tank_id']);
+        Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->set('pumpData.tank_id', $cpo->id)->set('pumpData.quantity_kg', 10_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'ui-2')
+            ->call('pump')->assertHasErrors(['pumpData.tank_id']);
 
         $this->assertDatabaseMissing('cargo_movements', ['idempotency_key' => 'ui-2']);
     }
@@ -129,28 +132,29 @@ class PanelPagesTest extends TestCase
         $pfad = Tank::where('code', 'PFAD-01')->first();
         $pfad->update(['opening_volume_kg' => 300_000]);       // ledger replay now ends at 1,991,500 kg
 
-        Livewire::test(ViewVesselDischarge::class, ['record' => $v->id])
-            ->callAction('pump', data: ['tank_id' => $pfad->id, 'quantity_kg' => 300_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-4'])
-            ->assertNotified('Rejected');
+        Livewire::test(RunDischarge::class, ['record' => $v->id])
+            ->set('pumpData.tank_id', $pfad->id)->set('pumpData.quantity_kg', 300_000)
+            ->set('pumpData.occurred_at', now()->toDateTimeString())->set('pumpData.idempotency_key', 'ui-4')
+            ->call('pump')->assertNotified('Not done');
 
         $this->assertDatabaseMissing('cargo_movements', ['idempotency_key' => 'ui-4']);
     }
 
-    public function test_operator_can_run_a_delivery_order_through_the_buttons(): void
+    public function test_operator_can_run_a_delivery_order_through_the_wizard(): void
     {
         $o = DeliveryOrder::where('status', OrderStatus::Pending->value)->first();       // ORD-1004, PFAD 200,000
         $pfad = Tank::where('code', 'PFAD-01')->first();
         $visit = $o->visits()->first();                                                  // KDA 999Z, weighed in at the gate
 
-        Livewire::test(ListDeliveryOrders::class)
-            ->callAction(TestAction::make('to_loading')->table($o))
-            ->assertNotified('Order is now Loading');
+        Livewire::test(ListDeliveryOrders::class)->assertActionVisible(TestAction::make('continue')->table($o));
 
-        app(TruckVisitWorkflow::class)->startLoading($visit);     // the truck moves to the loading bay
+        $w = Livewire::test(RunDelivery::class, ['record' => $o->id])
+            ->call('openLoading')->assertNotified('Loading opened')
+            ->call('selectVisit', $visit->id)->call('startTruckLoading')->assertNotified('Loading started');   // the truck moves to the loading bay
 
-        Livewire::test(ViewDeliveryOrder::class, ['record' => $o->id])
-            ->callAction('load', data: ['visit_id' => $visit->id, 'tank_id' => $pfad->id, 'quantity_kg' => 20_000, 'occurred_at' => now()->toDateTimeString(), 'idempotency_key' => 'ui-3'])
-            ->assertNotified('Truck loaded');
+        $w->set('loadData.tank_id', $pfad->id)->set('loadData.quantity_kg', 20_000)
+            ->set('loadData.occurred_at', now()->toDateTimeString())->set('loadData.idempotency_key', 'ui-3')
+            ->call('load')->assertNotified('Loaded');
 
         $this->assertSame(180_000, DeliveryOrder::withTotals()->find($o->id)->remainingKg());
         $this->assertSame(20_000, $visit->fresh()->loadedKg());
