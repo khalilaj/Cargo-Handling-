@@ -69,6 +69,10 @@ class DatabaseSeeder extends Seeder
         $this->linkOperationsToRegisters();
         $this->seedTruckVisits();
         $this->seedCorrection();
+
+        if (config('demo.extra')) {
+            $this->call(ExtraDemoSeeder::class);
+        }
     }
 
     private function seedLedger(): void
