@@ -105,7 +105,7 @@ class DeliveryOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(collect(OrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
             ])
-            ->recordActions([ViewAction::make(), ContinueAction::make(static::class)]);
+            ->recordActions([ContinueAction::make(static::class, iconOnly: true), ViewAction::make()->iconButton()->tooltip('View')]);   // View stays in the same place on every row
     }
 
     public static function getRelations(): array
