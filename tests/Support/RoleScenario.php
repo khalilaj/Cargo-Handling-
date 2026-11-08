@@ -150,6 +150,7 @@ trait RoleScenario
             'delivery-orders' => DeliveryOrder::first()->id,
             'truck-visits' => TruckVisit::first()->id,
             'tanks' => Tank::first()->id,
+            'cargo-movements' => CargoMovement::first()->id,
             'correction-requests' => CorrectionRequest::first()->id,
             'audit-logs' => AuditLog::first()->id,
             'users' => User::first()->id,

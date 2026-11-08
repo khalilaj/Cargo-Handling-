@@ -217,3 +217,22 @@ html.dark .bs-rc-fill { background: #F0EFEA; }
 .bs-finish strong { font-family: var(--bs-heading); font-size: 1.05rem; }
 .bs-finish span { font-size: .9rem; }
 html.dark .bs-finish { border-color: #f0efea; background: rgba(240,239,234,.08); }
+
+/* Cargo movement page: the journey and the "where it is now" line */
+.bs-journey { display: flex; flex-direction: column; gap: .75rem; }
+.bs-journey-title { margin: 0; font-family: var(--bs-heading); font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-steel); }
+.bs-journey-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bs-journey-step { display: flex; gap: .75rem; position: relative; padding-bottom: 1rem; }
+.bs-journey-step:not(:last-child)::before { content: ""; position: absolute; left: .85rem; top: 1.8rem; bottom: .1rem; width: 2px; background: var(--bs-line); }
+.bs-journey-dot { flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%; display: grid; place-items: center; font-size: .8rem; font-weight: 700; border: 2px solid var(--bs-ink); background: var(--bs-ink); color: #fff; }
+.bs-journey-step--now .bs-journey-dot { background: #d98a12; border-color: #d98a12; color: #1a1000; }
+.bs-journey-step--warn .bs-journey-dot { background: #be2828; border-color: #be2828; color: #fff; }
+.bs-journey-body { display: flex; flex-direction: column; gap: .15rem; min-width: 0; font-size: .9rem; }
+.bs-journey-body strong { font-family: var(--bs-heading); font-size: 1rem; }
+.bs-journey-link { font-weight: 600; text-decoration: underline; color: var(--bs-ink); }
+.bs-journey-note { margin: 0; padding: .6rem .8rem; border-radius: .5rem; background: rgba(217,138,18,.16); font-size: .9rem; }
+.bs-now { padding: .9rem 1.1rem; border: 2px solid var(--bs-ink, #153037); border-left-width: 8px; border-radius: .6rem; background: rgba(21,48,55,.06); }
+.bs-now p { margin: .25rem 0 0; font-family: var(--bs-heading); font-size: 1.1rem; font-weight: 600; }
+html.dark .bs-journey-dot { background: #6f95a3; border-color: #6f95a3; color: #071215; }
+html.dark .bs-journey-link, html.dark .bs-journey-title { color: #b6c3c7; }
+html.dark .bs-now { border-color: #f0efea; background: rgba(240,239,234,.08); }

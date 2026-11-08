@@ -61,6 +61,7 @@ class AccessMatrixTest extends TestCase
             'filament.admin.resources.tanks.create' => self::MANAGERS,
             'filament.admin.resources.tanks.edit' => self::MANAGERS,
             'filament.admin.resources.cargo-movements.index' => self::ALL,
+            'filament.admin.resources.cargo-movements.view' => self::ALL,
 
             // Reports and administration
             'filament.admin.pages.reports' => self::OVERSEERS,
