@@ -72,7 +72,7 @@ class OperationsTest extends TestCase
         $d = $advance($d, DischargeStatus::Discharging);
         $this->assertNotNull($d->started_at);
 
-        $this->pump($d, $this->tank(), 100_000, 'k1');
+        $this->pump($d, $this->tank(), 1_000_000, 'k1');          // the whole bill of lading
         $d = $advance($d, DischargeStatus::Completed);
 
         $this->assertSame(DischargeStatus::Completed, $d->status);

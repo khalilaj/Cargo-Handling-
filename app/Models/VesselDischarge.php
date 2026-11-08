@@ -54,7 +54,7 @@ class VesselDischarge extends Model
 
     protected $fillable = [
         'voyage_ref', 'vessel_id', 'berth_id', 'vessel_name', 'commodity', 'bl_quantity_kg', 'status',
-        'eta', 'berthed_at', 'started_at', 'completed_at',
+        'eta', 'berthed_at', 'started_at', 'completed_at', 'completion_note',
     ];
 
     protected function casts(): array
@@ -106,6 +106,14 @@ class VesselDischarge extends Model
     public function varianceKg(): int
     {
         return $this->bl_quantity_kg - $this->receivedGrossKg();
+    }
+
+    /** A voyage counts as fully discharged at this share of the bill of lading (the rest is measurement tolerance). */
+    public const FULL_DISCHARGE_PERCENT = 99;
+
+    public function isFullyDischarged(): bool
+    {
+        return $this->receivedGrossKg() * 100 >= $this->bl_quantity_kg * self::FULL_DISCHARGE_PERCENT;
     }
 
     public function progressPercent(): float

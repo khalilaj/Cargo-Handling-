@@ -10,6 +10,7 @@ use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Exceptions\InvalidStatusTransitionException;
 use App\Domain\Operations\Exceptions\OperationIncompleteException;
 use App\Models\Berth;
+use App\Models\User;
 use App\Models\VesselDischarge;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -17,19 +18,23 @@ use Illuminate\Support\Facades\DB;
 /** Moves a vessel discharge along its lifecycle; every transition is validated. */
 class AdvanceDischargeStatus
 {
-    public function __invoke(VesselDischarge $discharge, DischargeStatus $to, ?Berth $berth = null): VesselDischarge
+    /**
+     * @param  string|null  $shortfallReason  only for Completed while cargo is still on the ship: why the voyage is closed early
+     * @param  User|null  $by  who is asking; only a supervisor or admin may close a voyage early
+     */
+    public function __invoke(VesselDischarge $discharge, DischargeStatus $to, ?Berth $berth = null, ?string $shortfallReason = null, ?User $by = null): VesselDischarge
     {
         try {
-            return $this->advance($discharge, $to, $berth);
+            return $this->advance($discharge, $to, $berth, $shortfallReason, $by);
         } catch (UniqueConstraintViolationException) {
             // Another operator berthed a ship here (or this ship elsewhere) in the same instant; the database picked the winner.
             throw new BerthOccupiedException('That berth, or that vessel, was just taken by another operator. Refresh and choose again.');
         }
     }
 
-    private function advance(VesselDischarge $discharge, DischargeStatus $to, ?Berth $berth): VesselDischarge
+    private function advance(VesselDischarge $discharge, DischargeStatus $to, ?Berth $berth, ?string $shortfallReason, ?User $by): VesselDischarge
     {
-        return DB::transaction(function () use ($discharge, $to, $berth) {
+        return DB::transaction(function () use ($discharge, $to, $berth, $shortfallReason, $by) {
             $d = VesselDischarge::query()->lockForUpdate()->findOrFail($discharge->id);
 
             if (! $d->status->canTransitionTo($to)) {
@@ -48,6 +53,10 @@ class AdvanceDischargeStatus
                 throw new OperationIncompleteException(
                     "{$d->voyage_ref} has received no cargo yet, so it cannot be completed."
                 );
+            }
+            if ($to === DischargeStatus::Completed && $hasCargo && ! $d->isFullyDischarged()) {
+                $this->assertMayCloseEarly($d, $shortfallReason, $by);
+                $d->completion_note = trim($shortfallReason);
             }
             if ($to === DischargeStatus::Cancelled && $hasCargo) {
                 throw new OperationIncompleteException(
@@ -69,6 +78,24 @@ class AdvanceDischargeStatus
 
             return $d;
         });
+    }
+
+    /** Closing a voyage with cargo still on the ship is an exception: a supervisor or admin, with a written reason. */
+    private function assertMayCloseEarly(VesselDischarge $d, ?string $reason, ?User $by): void
+    {
+        $pct = $d->progressPercent();
+        $left = number_format($d->remainingKg());
+
+        if (! ($by?->role->canApprove() ?? false)) {
+            throw new OperationIncompleteException(
+                "{$d->voyage_ref} has received only {$pct}% of its bill of lading ({$left} kg still to discharge). Keep pumping, or ask a supervisor to close it early."
+            );
+        }
+        if (blank($reason)) {
+            throw new OperationIncompleteException(
+                "{$d->voyage_ref} has received only {$pct}% of its bill of lading. Give the reason it is being closed early."
+            );
+        }
     }
 
     /**
