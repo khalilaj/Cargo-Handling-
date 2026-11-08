@@ -54,7 +54,7 @@ class TruckVisitActions
                         DeliveryOrder::findOrFail($data['order_id']), Truck::findOrFail($data['truck_id']),
                         ($data['driver_id'] ?? null) ? Driver::findOrFail($data['driver_id']) : null, $data['notes'] ?? null,
                     );
-                    Notification::make()->title("{$visit->ref} gated in")->success()->send();
+                    Notification::make()->title("{$visit->ref} gated in")->body(WorkflowSteps::for($visit)['hint'])->duration(10000)->success()->send();
 
                     if ($visit->warnings) {
                         Notification::make()->title('Gated in with warnings')->body(implode("\n", $visit->warnings))->warning()->persistent()->send();
@@ -77,12 +77,14 @@ class TruckVisitActions
             Action::make('weigh_in')->label('Weigh in')->icon('heroicon-o-scale')->color('primary')
                 ->visible($at(VisitStatus::Arrived))
                 ->modalHeading('Empty weight on arrival')
+                ->modalDescription('Weigh the empty truck on the weighbridge and enter the reading. Loading comes next.')
                 ->schema($weight('Weighbridge reading (kg)', 'The truck is empty.'))
                 ->action(fn (array $data, TruckVisit $record) => self::run(fn () => $flow()->weighIn($record, (int) $data['kg']), 'Weighed in', $record)),
 
             Action::make('start_loading')->label('Start loading')->icon('heroicon-o-play')->color('primary')
                 ->visible($at(VisitStatus::WeighedIn))
                 ->requiresConfirmation()
+                ->modalDescription('Moves the truck into the loading bay. The delivery order must already be in Loading. Then press "Load from tank" to book the oil.')
                 ->action(fn (TruckVisit $record) => self::run(fn () => $flow()->startLoading($record), 'Loading started', $record)),
 
             self::loadAction(),
@@ -90,17 +92,20 @@ class TruckVisitActions
             Action::make('weigh_out')->label('Weigh out')->icon('heroicon-o-scale')->color('primary')
                 ->visible($at(VisitStatus::Loading))
                 ->modalHeading('Loaded weight on departure')
+                ->modalDescription('Weigh the loaded truck. The reading is compared with what you booked out of the tanks.')
                 ->schema($weight('Weighbridge reading (kg)', 'Full truck. It is compared with what was booked out of the tank.'))
                 ->action(fn (array $data, TruckVisit $record) => self::run(fn () => $flow()->weighOut($record, (int) $data['kg']), 'Weighed out', $record)),
 
             Action::make('gate_out')->label('Gate out')->icon('heroicon-o-arrow-right-start-on-rectangle')->color('success')
                 ->visible($at(VisitStatus::WeighedOut))
                 ->requiresConfirmation()
+                ->modalDescription('Releases the truck from the site. This is the last step of the visit.')
                 ->action(fn (TruckVisit $record) => self::run(fn () => $flow()->gateOut($record), 'Truck has left site', $record)),
 
             Action::make('cancel_visit')->label('Cancel visit')->icon('heroicon-o-x-circle')->color('danger')
                 ->visible($at(VisitStatus::Arrived, VisitStatus::WeighedIn))
                 ->requiresConfirmation()
+                ->modalDescription('Use this only if the truck leaves without loading.')
                 ->action(fn (TruckVisit $record) => self::run(fn () => $flow()->cancel($record), 'Visit cancelled', $record)),
         ];
 
@@ -113,6 +118,7 @@ class TruckVisitActions
         return Action::make('load_visit')->label('Load from tank')->icon('heroicon-o-arrow-down-tray')->color('primary')
             ->visible(fn (TruckVisit $record) => $record->status === VisitStatus::Loading)
             ->modalHeading(fn (TruckVisit $record) => "Load {$record->truck->plate} from a tank")
+            ->modalDescription('Choose the tank the oil comes from and the quantity. Repeat for each tank, then press "Weigh out".')
             ->schema(fn (TruckVisit $record) => [
                 Forms\Components\Select::make('tank_id')->label('Tank')->required()->searchable()
                     ->options(fn () => Tank::where('commodity', $record->order->commodity)->orderBy('code')->get()
@@ -143,7 +149,11 @@ class TruckVisitActions
             $work();
             $record?->refresh();
             if ($successTitle) {
-                Notification::make()->title($successTitle)->success()->send();
+                $notice = Notification::make()->title($successTitle)->success();
+                if ($record) {
+                    $notice->body(WorkflowSteps::for($record)['hint'])->duration(10000);
+                }
+                $notice->send();
             }
         } catch (CargoException $e) {
             Notification::make()->title('Rejected')->body($e->getMessage())->danger()->persistent()->send();

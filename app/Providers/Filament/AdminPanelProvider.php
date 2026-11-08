@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->favicon(asset('images/favicon.png'))
             ->font('Mulish', provider: GoogleFontProvider::class)
-            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="'.e(asset('css/bulkstream.css')).'?v=2">')
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="'.e(asset('css/bulkstream.css')).'?v=3">')
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE, fn (): string => '<div class="bs-login-tag">Terminal operations</div>')
             ->databaseNotifications(false)
             // The bell sits in the top bar, before the user menu, for roles that act on alerts.

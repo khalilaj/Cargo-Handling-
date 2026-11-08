@@ -14,6 +14,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -56,6 +57,7 @@ class VesselDischargeResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
+            ViewEntry::make('workflow')->hiddenLabel()->columnSpanFull()->view('filament.components.status-stepper'),
             Section::make('Vessel')->columns(4)->schema([
                 TextEntry::make('voyage_ref')->label('Voyage'),
                 TextEntry::make('vessel_name')->label('Vessel')
@@ -101,6 +103,9 @@ class VesselDischargeResource extends Resource
                     ->color(fn (DischargeStatus $state) => $state->color()),
                 Tables\Columns\TextColumn::make('bl_quantity_kg')->label('B/L (kg)')->numeric(),
                 Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0),
+                Tables\Columns\TextColumn::make('transit_loss')->label('Loss (kg)')
+                    ->state(fn (VesselDischarge $r) => number_format((int) $r->received_loss_kg))   // the list query already sums it
+                    ->tooltip('Transit loss: 0.5% of what was pumped, taken off automatically.'),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
                     ->state(fn (VesselDischarge $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (VesselDischarge $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),

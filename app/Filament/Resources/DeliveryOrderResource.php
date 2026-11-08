@@ -14,6 +14,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -56,6 +57,7 @@ class DeliveryOrderResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
+            ViewEntry::make('workflow')->hiddenLabel()->columnSpanFull()->view('filament.components.status-stepper'),
             Section::make('Order')->columns(4)->schema([
                 TextEntry::make('order_ref')->label('Order'),
                 TextEntry::make('customer'),
