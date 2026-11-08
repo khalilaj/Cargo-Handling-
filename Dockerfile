@@ -1,8 +1,9 @@
-FROM php:8.3-apache
+FROM php:8.5-apache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libicu-dev libzip-dev libpq-dev \
-    && docker-php-ext-install intl zip pdo_pgsql pdo_mysql bcmath opcache \
+    # OPcache is built into PHP 8.5 itself, so it is no longer installed as an extension.
+    && docker-php-ext-install intl zip pdo_pgsql pdo_mysql bcmath \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
