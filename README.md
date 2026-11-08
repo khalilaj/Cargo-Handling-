@@ -6,7 +6,6 @@
 </p>
 
 <h1 align="center">Cargo Handling System</h1>
-<p align="center"><b>Bulkstream Limited System Developer Technical Assessment</b></p>
 
 ## 1. Overview
 
