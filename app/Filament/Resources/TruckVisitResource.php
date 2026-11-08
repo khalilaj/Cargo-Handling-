@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -59,6 +60,7 @@ class TruckVisitResource extends Resource
         $dt = fn (string $f, string $label) => TextEntry::make($f)->label($label)->dateTime('d M Y H:i')->placeholder('—');
 
         return $schema->components([
+            ViewEntry::make('workflow')->hiddenLabel()->columnSpanFull()->view('filament.components.status-stepper'),
             Section::make('Visit')->columns(4)->schema([
                 TextEntry::make('ref')->label('Visit'),
                 TextEntry::make('status')->badge()->formatStateUsing(fn (VisitStatus $state) => $state->label())->color(fn (VisitStatus $state) => $state->color()),

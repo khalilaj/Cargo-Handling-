@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use App\Domain\Cargo\Exceptions\CargoException;
+use App\Domain\Cargo\Services\TransitLossCalculator;
 use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Actions\AdvanceDischargeStatus;
 use App\Domain\Operations\Actions\AdvanceOrderStatus;
@@ -19,6 +20,9 @@ use Closure;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -32,14 +36,15 @@ class OperationActions
             Action::make('pump')
                 ->label('Pump into tank')->icon('heroicon-o-arrow-down-tray')->color('primary')
                 ->modalHeading('Pump cargo into a shore tank (0.5% transit loss applies)')
+                ->modalDescription('Choose the tank that holds this product, then the quantity. The loss is taken off for you and shown below.')
                 ->visible(fn (VesselDischarge $record) => $record->status->isActive())
-                ->schema(fn (VesselDischarge $record) => self::movementForm($record->commodity, $record->remainingKg(), 'B/L'))
+                ->schema(fn (VesselDischarge $record) => self::movementForm($record->commodity, $record->remainingKg(), 'B/L', showLoss: true))
                 ->action(fn (array $data, VesselDischarge $record) => self::run(
                     fn () => app(RecordDischargeIntoTank::class)(
                         $record, (int) $data['tank_id'], (int) $data['quantity_kg'],
                         Carbon::parse($data['occurred_at']), $data['idempotency_key'],
                     ),
-                    'Cargo pumped into tank',
+                    'Cargo pumped into tank', $record,
                 )),
         ];
 
@@ -48,6 +53,7 @@ class OperationActions
             ->label(DischargeStatus::Berthed->actionLabel())
             ->color('gray')
             ->modalHeading('Assign a berth')
+            ->modalDescription('Pick a berth that is free. The ship is then alongside and can start discharging.')
             ->visible(fn (VesselDischarge $record) => $record->status->canTransitionTo(DischargeStatus::Berthed))
             ->schema(fn (VesselDischarge $record) => [
                 Forms\Components\Select::make('berth_id')->label('Berth')->required()
@@ -59,7 +65,7 @@ class OperationActions
             ])
             ->action(fn (array $data, VesselDischarge $record) => self::run(
                 fn () => app(AdvanceDischargeStatus::class)($record, DischargeStatus::Berthed, Berth::findOrFail($data['berth_id'])),
-                'Discharge is now Berthed',
+                'Discharge is now Berthed', $record,
             ));
 
         foreach ([DischargeStatus::Discharging, DischargeStatus::Completed, DischargeStatus::Cancelled] as $to) {
@@ -67,6 +73,7 @@ class OperationActions
                 ->label($to->actionLabel())
                 ->color($to === DischargeStatus::Cancelled ? 'danger' : 'gray')
                 ->requiresConfirmation()
+                ->modalDescription(self::dischargeStepTip($to))
                 ->visible(fn (VesselDischarge $record) => $record->status->canTransitionTo($to))
                 // Closing early (cargo still on the ship) asks a supervisor for the reason; everyone else is told why not.
                 ->schema(fn (VesselDischarge $record) => $to === DischargeStatus::Completed && ! $record->isFullyDischarged() && (auth()->user()?->role->canApprove() ?? false)
@@ -75,7 +82,7 @@ class OperationActions
                     : [])
                 ->action(fn (array $data, VesselDischarge $record) => self::run(
                     fn () => app(AdvanceDischargeStatus::class)($record, $to, null, $data['shortfall_reason'] ?? null, auth()->user()),
-                    "Discharge is now {$to->label()}",
+                    "Discharge is now {$to->label()}", $record,
                 ));
         }
 
@@ -89,6 +96,7 @@ class OperationActions
             Action::make('load')
                 ->label('Load truck')->icon('heroicon-o-truck')->color('primary')
                 ->modalHeading('Load a truck from a tank')
+                ->modalDescription('Choose the truck in the loading bay and the tank the oil comes from. Repeat for each truck.')
                 ->visible(fn (DeliveryOrder $record) => $record->status->isActive())
                 ->schema(fn (DeliveryOrder $record) => [
                     Forms\Components\Select::make('visit_id')->label('Truck in the loading bay')->required()
@@ -103,7 +111,7 @@ class OperationActions
                         $record, (int) $data['tank_id'], (int) $data['quantity_kg'],
                         Carbon::parse($data['occurred_at']), $data['idempotency_key'], null, TruckVisit::findOrFail($data['visit_id']),
                     ),
-                    'Truck loaded',
+                    'Truck loaded', $record,
                 )),
         ];
 
@@ -112,10 +120,11 @@ class OperationActions
                 ->label($to->actionLabel())
                 ->color($to === OrderStatus::Cancelled ? 'danger' : 'gray')
                 ->requiresConfirmation()
+                ->modalDescription(self::orderStepTip($to))
                 ->visible(fn (DeliveryOrder $record) => $record->status->canTransitionTo($to))
                 ->action(fn (DeliveryOrder $record) => self::run(
                     fn () => app(AdvanceOrderStatus::class)($record, $to),
-                    "Order is now {$to->label()}",
+                    "Order is now {$to->label()}", $record,
                 ));
         }
 
@@ -139,28 +148,82 @@ class OperationActions
         );
     }
 
-    private static function movementForm($commodity, int $remainingKg, string $limitLabel): array
+    /** @param  bool  $showLoss  inbound vessel pumping only: show the transit loss as the quantity is typed */
+    private static function movementForm($commodity, int $remainingKg, string $limitLabel, bool $showLoss = false): array
     {
-        return [
+        $quantity = Forms\Components\TextInput::make('quantity_kg')->label('Quantity (kg)')->numeric()->integer()
+            ->minValue(1)->maxValue($remainingKg)->required()
+            ->helperText('Remaining on '.$limitLabel.': '.number_format($remainingKg).' kg');
+
+        $fields = [
             Forms\Components\Select::make('tank_id')->label('Tank')->required()->searchable()
                 ->options(fn () => Tank::where('commodity', $commodity)->orderBy('code')->get()->mapWithKeys(fn (Tank $t) => [
                     $t->id => sprintf('%s · %s of %s t used', $t->code,
                         number_format($t->current_volume_kg / 1000, 1), number_format($t->capacity_kg / 1000, 1)),
                 ]))
                 ->helperText('Only tanks that hold this product are listed.'),
-            Forms\Components\TextInput::make('quantity_kg')->label('Quantity (kg)')->numeric()->integer()
-                ->minValue(1)->maxValue($remainingKg)->required()
-                ->helperText('Remaining on '.$limitLabel.': '.number_format($remainingKg).' kg'),
+            $quantity,
+        ];
+
+        if ($showLoss) {
+            $quantity->live(onBlur: true);
+            $fields[] = Text::make(fn (Get $get): string => self::lossPreview((int) $get('quantity_kg')))->color('warning');
+        }
+
+        return [
+            ...$fields,
             Forms\Components\DateTimePicker::make('occurred_at')->label('When it happened')->seconds(false)->default(now())->required(),
             Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
         ];
     }
 
-    private static function run(Closure $work, string $successTitle): void
+    /** What the person is about to book, in plain words. The rate and the sums come from the one calculator. */
+    private static function lossPreview(int $grossKg): string
+    {
+        $percent = TransitLossCalculator::LOSS_PER_MILLE / 10;
+
+        if ($grossKg <= 0) {
+            return "Transit loss: {$percent}% of what you pump is taken off automatically. Enter a quantity to see the figures.";
+        }
+
+        $loss = app(TransitLossCalculator::class)->lossFor($grossKg);
+
+        return sprintf('Pumping %s kg: %s kg is lost in transit (%s%%), so %s kg goes into the tank.',
+            number_format($grossKg), number_format($loss), $percent, number_format($grossKg - $loss));
+    }
+
+    /** One plain sentence for the pop-up asking to confirm a voyage step. */
+    private static function dischargeStepTip(DischargeStatus $to): string
+    {
+        return match ($to) {
+            DischargeStatus::Discharging => 'Starts pumping. After this, press "Pump into tank" for each tank you fill.',
+            DischargeStatus::Completed => 'Closes the voyage. At least 99% of the bill of lading must be received. A supervisor can close earlier with a written reason.',
+            DischargeStatus::Cancelled => 'Stops this voyage for good. Use it only if the ship will not discharge here.',
+            default => '',
+        };
+    }
+
+    /** One plain sentence for the pop-up asking to confirm an order step. */
+    private static function orderStepTip(OrderStatus $to): string
+    {
+        return match ($to) {
+            OrderStatus::Loading => 'Opens the order for loading. Trucks you gate in can then be loaded against it.',
+            OrderStatus::Completed => 'Closes the order. Do this once the full quantity has been delivered.',
+            OrderStatus::Cancelled => 'Stops this order for good. Anything already loaded stays in the ledger.',
+            default => '',
+        };
+    }
+
+    /** After a step: say what happened and what to do next, in a pop-up that stays long enough to read. */
+    private static function run(Closure $work, string $successTitle, ?Model $record = null): void
     {
         try {
             $work();
-            Notification::make()->title($successTitle)->success()->send();
+            $notice = Notification::make()->title($successTitle)->success();
+            if ($record) {
+                $notice->body(WorkflowSteps::for($record->refresh())['hint'])->duration(10000);
+            }
+            $notice->send();
         } catch (CargoException $e) {
             Notification::make()->title('Rejected')->body($e->getMessage())->danger()->persistent()->send();
         }
