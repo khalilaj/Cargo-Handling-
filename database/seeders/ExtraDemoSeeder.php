@@ -110,7 +110,10 @@ class ExtraDemoSeeder extends Seeder
     /** Past voyages and orders with their real ledger movements, plus open ones to run through the wizards. */
     private function seedOperations(): void
     {
-        if (VesselDischarge::where('voyage_ref', 'VOY-2610-01')->exists()) {
+        // Already seeded, or the database holds one of these refs for another reason: leave the voyages alone
+        // rather than crash the boot on the unique voyage_ref constraint.
+        $refs = ['VOY-2610-01', 'VOY-2610-02', 'VOY-2611-06', 'VOY-2611-07', 'VOY-2611-08'];
+        if (VesselDischarge::whereIn('voyage_ref', $refs)->exists()) {
             return;
         }
 

@@ -55,6 +55,17 @@ class ExtraDemoSeederTest extends TestCase
         $this->assertSame($once, $this->counts());
     }
 
+    public function test_it_does_not_crash_when_a_voyage_reference_is_already_taken(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        // A live database that already holds one of the demo refs, but not the first one.
+        VesselDischarge::where('voyage_ref', 'VOY-2611-05')->update(['voyage_ref' => 'VOY-2611-06']);
+
+        $this->seed(ExtraDemoSeeder::class);
+
+        $this->assertSame(1, VesselDischarge::where('voyage_ref', 'VOY-2611-06')->count());
+    }
+
     public function test_the_seeder_hooks_in_when_the_flag_is_on(): void
     {
         config(['demo.extra' => true]);
