@@ -15,7 +15,7 @@ class WizardFields
     public static function tank($commodity): Forms\Components\Select
     {
         return Forms\Components\Select::make('tank_id')->label('Tank')->required()->searchable()->live()   // the quick amounts follow the tank
-            ->options(fn () => Tank::where('commodity', $commodity)->orderBy('code')->get()->mapWithKeys(fn (Tank $t) => [
+            ->options(fn () => Tank::where('commodity', $commodity)->where('active', true)->orderBy('code')->get()->mapWithKeys(fn (Tank $t) => [
                 $t->id => sprintf('%s · %s of %s t used', $t->code,
                     number_format($t->current_volume_kg / 1000, 1), number_format($t->capacity_kg / 1000, 1)),
             ]))

@@ -188,28 +188,28 @@ class RegistersUiTest extends TestCase
             ->assertSee('Valid')->assertSee('Not recorded');
     }
 
-    // ---- deactivate, never delete ------------------------------------------------------------------
+    // ---- archive, then (admin only) delete ------------------------------------------------------------------
 
-    public function test_a_free_berth_can_be_switched_off_and_on(): void
+    public function test_a_free_berth_can_be_archived_and_restored(): void
     {
-        $this->login(Role::Supervisor);
+        $this->login(Role::Admin);
         $free = Berth::create(['code' => 'B9', 'name' => 'Spare']);
 
-        Livewire::test(ListBerths::class)->callAction(TestAction::make('toggle_active')->table($free))->assertNotified('Deactivated');
+        Livewire::test(ListBerths::class)->callAction(TestAction::make('archive')->table($free))->assertNotified('Archived');
         $this->assertFalse($free->fresh()->active);
 
-        Livewire::test(ListBerths::class)->callAction(TestAction::make('toggle_active')->table($free->fresh()))->assertNotified('Activated');
+        Livewire::test(ListBerths::class)->removeTableFilter('active')->callAction(TestAction::make('restore')->table($free->fresh()))->assertNotified('Restored');
         $this->assertTrue($free->fresh()->active);
     }
 
-    public function test_things_in_use_cannot_be_switched_off(): void
+    public function test_things_in_use_cannot_be_archived(): void
     {
-        $this->login(Role::Supervisor);
+        $this->login(Role::Admin);
         $busyBerth = Berth::where('code', 'B1')->first();                       // Borneo Trader is discharging here
         $ship = Vessel::where('name', 'MV Borneo Trader')->first();
 
-        Livewire::test(ListBerths::class)->callAction(TestAction::make('toggle_active')->table($busyBerth))->assertNotified('Cannot deactivate');
-        Livewire::test(ListVessels::class)->callAction(TestAction::make('toggle_active')->table($ship))->assertNotified('Cannot deactivate');
+        Livewire::test(ListBerths::class)->callAction(TestAction::make('archive')->table($busyBerth))->assertNotified('Not done');
+        Livewire::test(ListVessels::class)->callAction(TestAction::make('archive')->table($ship))->assertNotified('Not done');
 
         $this->assertTrue($busyBerth->fresh()->active);
         $this->assertTrue($ship->fresh()->active);

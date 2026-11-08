@@ -3,9 +3,12 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Policies\Concerns\ArchivesRegisters;
 
 class TankPolicy
 {
+    use ArchivesRegisters;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -24,16 +27,5 @@ class TankPolicy
     public function update(User $user, $model = null): bool
     {
         return $user->role->canManageMasterData();
-    }
-
-    /** Operational data is never deleted; corrections are made with reversal movements. */
-    public function delete(User $user, $model = null): bool
-    {
-        return false;
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
     }
 }

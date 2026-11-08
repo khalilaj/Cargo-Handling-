@@ -3,9 +3,12 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Policies\Concerns\ArchivesRegisters;
 
 class TransporterPolicy
 {
+    use ArchivesRegisters;
+
     public function viewAny(User $user): bool
     {
         return $user->role->canViewRegisters();
@@ -24,16 +27,5 @@ class TransporterPolicy
     public function update(User $user, $model = null): bool
     {
         return $user->role->canManageMasterData();
-    }
-
-    /** Registers are deactivated, never deleted: history refers to them. */
-    public function delete(User $user, $model = null): bool
-    {
-        return false;
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
     }
 }

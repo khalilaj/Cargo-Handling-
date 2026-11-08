@@ -80,8 +80,8 @@ class WorkflowSteps
         $hint = match ($o->status) {
             OrderStatus::Pending => 'Next: press "Start loading" to open the order for trucks.',
             OrderStatus::Loading => $o->remainingKg() > 0
-                ? "Next: gate a truck in, weigh it, load it from a tank, weigh it out and gate it out. Repeat for each truck. {$kg} kg still to load. Then finish the order."
-                : 'Next: the full quantity is loaded. Once every truck has left, finish the order and press "Complete order".',
+                ? "Next: gate a truck in, weigh it, load it from a tank, weigh it out and gate it out. Repeat for each truck. {$kg} kg still to load."
+                : 'Next: the full quantity is loaded. Once every truck has left, press "Complete the order".',
             OrderStatus::Completed => 'Done. The order is fully delivered and closed.',
             OrderStatus::Cancelled => 'This order was cancelled. Nothing more can be done on it.',
         };

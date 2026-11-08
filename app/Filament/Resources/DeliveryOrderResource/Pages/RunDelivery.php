@@ -44,7 +44,7 @@ class RunDelivery extends Page
 
     protected string $view = 'filament.pages.run-delivery';
 
-    /** 'complete' while closing the order, 'gate-in' while adding another truck. */
+    /** 'gate-in' while adding another truck. */
     #[Url(as: 'step')]
     public string $step = '';
 
@@ -92,7 +92,7 @@ class RunDelivery extends Page
     {
         return match ($this->record->status) {
             OrderStatus::Pending => 'open',
-            OrderStatus::Loading => $this->step === 'complete' ? 'complete' : 'trucks',
+            OrderStatus::Loading => 'trucks',
             OrderStatus::Completed => 'done',
             OrderStatus::Cancelled => 'cancelled',
         };
@@ -130,7 +130,7 @@ class RunDelivery extends Page
     protected function getViewData(): array
     {
         $o = $this->record;
-        $onSite = $this->panel() === 'trucks' || $this->panel() === 'complete' || $this->panel() === 'open' ? $this->onSite() : collect();
+        $onSite = $this->panel() === 'trucks' || $this->panel() === 'open' ? $this->onSite() : collect();
         $current = $this->currentVisit($onSite);
 
         return [
@@ -358,11 +358,6 @@ class RunDelivery extends Page
     public function gateOut(): void
     {
         $this->visitStep(fn (TruckVisit $v) => app(TruckVisitWorkflow::class)->gateOut($v), 'Truck has left site');
-    }
-
-    public function finishOrder(): void
-    {
-        $this->step = 'complete';
     }
 
     public function completeOrder(): void

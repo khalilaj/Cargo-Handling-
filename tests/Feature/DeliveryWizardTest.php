@@ -102,7 +102,9 @@ class DeliveryWizardTest extends TestCase
             ->set('loadData.occurred_at', now()->toDateTimeString())->set('loadData.idempotency_key', 'dw-2')->call('load')->assertNotified('Loaded');
         $w->set('weighOutData.kg', 33_500)->call('weighOut')->call('gateOut');
 
-        $w->call('finishOrder')->assertSee('Press Complete')->call('completeOrder')->assertNotified('Order completed');
+        $w->assertDontSee('Complete the order')->assertSee('Close the order short');       // 30,000 of 200,000 kg: not all loaded, nobody at the gate
+        $order->update(['ordered_kg' => $order->deliveredKg()]);                            // everything ordered is now loaded
+        $w->call('$refresh')->assertSee('Complete the order')->assertDontSee('Close the order short')->call('completeOrder')->assertNotified('Order completed');
         $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
         $w->assertSee('Order complete');
     }
@@ -111,8 +113,7 @@ class DeliveryWizardTest extends TestCase
     {
         $order = $this->order('ORD-1003');                                   // KCD 452M is loading, KCB 887L has arrived
 
-        $this->wizard($order)->call('finishOrder')->assertSee('Trucks are still on site')->assertSee('KCD 452M')
-            ->call('completeOrder')->assertNotified('Not done');
+        $this->wizard($order)->assertDontSee('Complete the order')->call('completeOrder')->assertNotified('Not done');
         $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
     }
 
@@ -203,7 +204,7 @@ class DeliveryWizardTest extends TestCase
             $this->loginAs($role);
 
             $this->wizard($this->order('ORD-1004'))->assertSee('Open loading')->assertSee('Start loading');
-            $this->wizard($this->order('ORD-1003'))->assertSee('Trucks')->assertSee('Gate in another truck')->assertSee('Finish the order')
+            $this->wizard($this->order('ORD-1003'))->assertSee('Trucks')->assertSee('Gate in another truck')->assertDontSee('Finish the order')->assertDontSee('Complete the order')
                 ->call('selectVisit', $loading->id)->assertSee('Load from a tank')->assertSee('Weigh out');
             $this->wizard($this->order('ORD-1001'))->assertSee('Order complete');
         }

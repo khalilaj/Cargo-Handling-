@@ -24,7 +24,7 @@ class Tank extends Model
 
     protected $fillable = [
         'code', 'name', 'commodity', 'capacity_kg',
-        'opening_volume_kg', 'current_volume_kg', 'requires_heating',
+        'opening_volume_kg', 'current_volume_kg', 'requires_heating', 'active',
     ];
 
     protected function casts(): array
@@ -35,6 +35,7 @@ class Tank extends Model
             'opening_volume_kg' => 'integer',
             'current_volume_kg' => 'integer',
             'requires_heating' => 'boolean',
+            'active' => 'boolean',
         ];
     }
 

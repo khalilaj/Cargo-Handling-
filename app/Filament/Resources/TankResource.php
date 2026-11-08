@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Domain\Cargo\Enums\Commodity;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\TankResource\Pages;
+use App\Filament\Support\RegisterActions;
 use App\Models\Tank;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -81,7 +82,8 @@ class TankResource extends Resource
             ->poll('10s')
             ->recordUrl(fn (Tank $t) => static::getUrl('view', ['record' => $t]))
             ->columns(self::levelColumns())
-            ->recordActions([ViewAction::make(), EditAction::make()]);
+            ->filters([RegisterActions::statusFilter()])
+            ->recordActions([ViewAction::make(), EditAction::make(), ...RegisterActions::archiveActions()]);
     }
 
     public static function getRelations(): array

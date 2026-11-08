@@ -39,17 +39,22 @@
                         <div>
                             <strong>All {{ number_format($ordered) }} kg is loaded.</strong>
                             @if ($onSite->isEmpty())
-                                <span>No trucks are left on site. Finish the order to close it.</span>
+                                <span>No trucks are left on site. Complete the order to close it.</span>
                             @else
-                                <span>Gate out the {{ $onSite->count() === 1 ? 'last truck' : 'trucks' }} still on site, then finish the order.</span>
+                                <span>Gate out the {{ $onSite->count() === 1 ? 'last truck' : 'trucks' }} still on site, then complete the order.</span>
                             @endif
                         </div>
                         @if ($onSite->isEmpty())
-                            <x-filament::button size="lg" :disabled="$readOnly" wire:click="finishOrder" wire:loading.attr="disabled" wire:target="finishOrder">Finish the order</x-filament::button>
+                            <x-filament::button size="lg" :disabled="$readOnly" wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder">Complete the order</x-filament::button>
                         @endif
                     </div>
                 @else
-                    <p class="bs-panel-lead">Take each truck through the gate, the weighbridge and the loading bay. When one has left, gate in the next, or finish the order.</p>
+                    <p class="bs-panel-lead">Take each truck through the gate, the weighbridge and the loading bay. When one has left, gate in the next.</p>
+                    @if ($delivered > 0 && $onSite->isEmpty())
+                        {{-- Part-loaded and nobody at the gate: the order can still be closed, but quietly and after a question. --}}
+                        <p class="bs-short-close">{{ number_format($delivered) }} of {{ number_format($ordered) }} kg loaded so far. Customer took less?
+                            <button type="button" class="bs-link-btn" @disabled($readOnly) wire:click="completeOrder" wire:confirm="Close this order with {{ number_format($delivered) }} of {{ number_format($ordered) }} kg loaded?" wire:loading.attr="disabled" wire:target="completeOrder">Close the order short</button></p>
+                    @endif
                 @endif
 
                 @if ($onSite->isNotEmpty())
@@ -103,41 +108,51 @@
                         @break
 
                     @case ('load')
-                        <h3 class="bs-sub">Load from a tank</h3>
-                        <form wire:submit="load">
-                            {{ $this->loadForm }}
-                            <div class="bs-panel-actions">
-                                <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="load">Load from tank</x-filament::button>
+                        <div x-data="{ tab: @js($loads->isNotEmpty() ? 'weigh-out' : 'load') }">
+                            <div class="bs-tabs" role="tablist" aria-label="Loading steps for this truck">
+                                <button type="button" role="tab" class="bs-tab" :class="{ 'is-active': tab === 'load' }" :aria-selected="tab === 'load'" x-on:click="tab = 'load'">Load from a tank</button>
+                                <button type="button" role="tab" class="bs-tab" :class="{ 'is-active': tab === 'weigh-out' }" :aria-selected="tab === 'weigh-out'" x-on:click="tab = 'weigh-out'">Weigh out</button>
                             </div>
-                        </form>
-                        @if ($loads->isNotEmpty())
-                            <div class="bs-list">
-                                <h3>Loaded onto this truck</h3>
-                                <div class="bs-table-wrap">
-                                    <table class="bs-table">
-                                        <thead><tr><th scope="col">When</th><th scope="col">Tank</th><th scope="col" class="num">Quantity (kg)</th></tr></thead>
-                                        <tbody>
-                                            @foreach ($loads as $m)
-                                                <tr>
-                                                    <td>{{ \App\Support\KenyaTime::of($m->occurred_at)->format('d M H:i') }}</td>
-                                                    <td>{{ $m->tank?->code ?? '?' }}</td>
-                                                    <td class="num">{{ number_format($m->gross_kg) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endif
-                        <h3 class="bs-sub">When the truck is full, weigh it out</h3>
-                        <form wire:submit="weighOut">
-                            {{ $this->weighOutForm }}
-                            <div class="bs-panel-actions">
-                                <x-filament::button type="submit" color="gray" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="weighOut">Weigh out</x-filament::button>
-                            </div>
-                        </form>
-                        @break
 
+                            <div x-show="tab === 'load'" role="tabpanel">
+                                <form wire:submit="load">
+                                    {{ $this->loadForm }}
+                                    <div class="bs-panel-actions">
+                                        <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="load">Load from tank</x-filament::button>
+                                    </div>
+                                </form>
+                                @if ($loads->isNotEmpty())
+                                    <div class="bs-list">
+                                        <h3>Loaded onto this truck</h3>
+                                        <div class="bs-table-wrap">
+                                            <table class="bs-table">
+                                                <thead><tr><th scope="col">When</th><th scope="col">Tank</th><th scope="col" class="num">Quantity (kg)</th></tr></thead>
+                                                <tbody>
+                                                    @foreach ($loads as $m)
+                                                        <tr>
+                                                            <td>{{ \App\Support\KenyaTime::of($m->occurred_at)->format('d M H:i') }}</td>
+                                                            <td>{{ $m->tank?->code ?? '?' }}</td>
+                                                            <td class="num">{{ number_format($m->gross_kg) }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div x-show="tab === 'weigh-out'" x-cloak role="tabpanel">
+                                <p class="bs-panel-lead">When the truck is full, weigh it on the way out.</p>
+                                <form wire:submit="weighOut">
+                                    {{ $this->weighOutForm }}
+                                    <div class="bs-panel-actions">
+                                        <x-filament::button type="submit" :disabled="$readOnly" wire:loading.attr="disabled" wire:target="weighOut">Weigh out</x-filament::button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @break
                     @case ('gate-out')
                         <h3 class="bs-sub">Release the truck</h3>
                         <p class="bs-panel-lead">{{ $current->truck->plate }} has been weighed out. The last step of this visit is to let it leave.</p>
@@ -151,24 +166,6 @@
                     @if ($lane !== 'gate-in')
                         <x-filament::button color="gray" type="button" wire:click="startGateIn">Gate in another truck</x-filament::button>
                     @endif
-                    <x-filament::button :color="$delivered > 0 ? 'primary' : 'gray'" :size="$delivered > 0 ? 'lg' : 'md'" type="button" wire:click="finishOrder">Finish the order</x-filament::button>
-                </div>
-                @break
-
-            @case ('complete')
-                <h2>Complete the order</h2>
-                @if ($onSite->isNotEmpty())
-                    <p class="bs-panel-lead">Trucks are still on site: {{ $onSite->map(fn ($v) => $v->truck->plate.' ('.$v->status->label().')')->join(', ') }}. Gate them out or cancel their visits first.</p>
-                @elseif ($delivered <= 0)
-                    <p class="bs-panel-lead">Nothing has been loaded yet, so the order cannot be completed.</p>
-                @else
-                    <p class="bs-panel-lead">{{ number_format($delivered) }} kg of {{ number_format($ordered) }} kg was loaded. Press Complete to close the order.</p>
-                @endif
-                <div class="bs-panel-actions">
-                    @if ($onSite->isEmpty() && $delivered > 0)
-                        <x-filament::button :disabled="$readOnly" wire:click="completeOrder" wire:loading.attr="disabled" wire:target="completeOrder">Complete order</x-filament::button>
-                    @endif
-                    <x-filament::button color="gray" type="button" wire:click="backToTrucks">Back to the trucks</x-filament::button>
                 </div>
                 @break
 

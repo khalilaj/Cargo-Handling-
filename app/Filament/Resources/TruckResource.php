@@ -92,8 +92,8 @@ class TruckResource extends Resource
                     ->state(fn (Truck $record) => $record->activeVisit?->status->label())->placeholder('—')->badge()->color('warning'),
                 Tables\Columns\IconColumn::make('active')->boolean(),
             ])
-            ->filters([Tables\Filters\TernaryFilter::make('active')])
-            ->recordActions([ViewAction::make(), EditAction::make(), RegisterActions::toggleActive()]);
+            ->filters([RegisterActions::statusFilter()])
+            ->recordActions([ViewAction::make(), EditAction::make(), ...RegisterActions::archiveActions()]);
     }
 
     public static function getRelations(): array

@@ -161,7 +161,7 @@ class QuantityChipsTest extends TestCase
         Livewire::test(RunDelivery::class, ['record' => $order->id])->call('setWeight', 'in', 1)->assertForbidden();
     }
 
-    public function test_finish_the_order_is_called_out_once_everything_is_loaded(): void
+    public function test_complete_the_order_appears_only_once_everything_is_loaded_and_the_trucks_have_left(): void
     {
         $this->seedWithEdgeStates();
         $this->loginAs(Role::Operator);
@@ -171,11 +171,11 @@ class QuantityChipsTest extends TestCase
 
         $order->update(['ordered_kg' => $order->deliveredKg()]);                                      // now everything ordered is loaded
         Livewire::test(RunDelivery::class, ['record' => $order->id])
-            ->assertSee('is loaded.')->assertSee('then finish the order')->assertSee('bs-finish', false);
+            ->assertSee('is loaded.')->assertSee('then complete the order')->assertDontSee('Complete the order')->assertSee('bs-finish', false);
 
         TruckVisit::where('delivery_order_id', $order->id)->update(['status' => 'departed', 'active_truck_id' => null]);        // and every truck has left
         Livewire::test(RunDelivery::class, ['record' => $order->id])
-            ->assertSee('No trucks are left on site. Finish the order to close it.')->assertSee('Finish the order');
+            ->assertSee('No trucks are left on site. Complete the order to close it.')->assertSee('Complete the order')->assertDontSee('Finish the order');
     }
 
     public function test_the_wizards_carry_the_phone_first_markup(): void

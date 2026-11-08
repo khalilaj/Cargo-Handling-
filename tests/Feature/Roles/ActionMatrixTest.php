@@ -99,7 +99,7 @@ class ActionMatrixTest extends TestCase
     }
 
     /** @param  list<array{record: object, action: string, roles: list<string>}>  $rows */
-    private function assertRowActions(string $page, array $opensFor, array $rows, string $context, bool $removeFilters = false): void
+    private function assertRowActions(string $page, array $opensFor, array $rows, string $context, bool $removeFilters = false, string $filter = 'status'): void
     {
         foreach ($this->roles() as $role) {
             $this->loginAs($role);
@@ -112,7 +112,7 @@ class ActionMatrixTest extends TestCase
 
             $component = Livewire::test($page);
             if ($removeFilters) {
-                $component->removeTableFilter('status');
+                $component->removeTableFilter($filter);
             }
             foreach ($rows as $row) {
                 $target = TestAction::make($row['action'])->table($row['record']);
@@ -225,7 +225,7 @@ class ActionMatrixTest extends TestCase
 
     public function test_movement_screen_buttons(): void
     {
-        $this->assertHeaderActions(ListCargoMovements::class, [], self::ALL, ['discharge' => self::OPERATE, 'delivery' => self::OPERATE], 'movements header');
+        $this->assertHeaderActions(ListCargoMovements::class, [], self::ALL, [], 'movements header');   // the ledger has no booking buttons
 
         $free = CargoMovement::where('idempotency_key', 'seed-1')->first();                  // can be corrected
         $pending = CargoMovement::where('idempotency_key', 'seed-5')->first();               // already has an open request
@@ -281,15 +281,28 @@ class ActionMatrixTest extends TestCase
         $this->assertHeaderActions(ListUsers::class, [], self::ADMIN, ['create' => self::ADMIN], 'users');
     }
 
-    public function test_register_switches_are_for_managers_in_every_state(): void
+    public function test_register_archive_and_delete_buttons_are_for_admins_only_and_follow_the_state(): void
     {
-        $this->assertRowActions(ListVessels::class, self::MANAGERS, [
-            ['record' => Vessel::where('name', 'MV Pacific Dawn')->first(), 'action' => 'toggle_active', 'roles' => self::MANAGERS],   // active
-            ['record' => Vessel::where('name', 'MV Retired')->first(), 'action' => 'toggle_active', 'roles' => self::MANAGERS],        // inactive: offers Activate
-        ], 'vessel switches');
+        $vessel = Vessel::where('name', 'MV Pacific Dawn')->first();     // active
+        $retired = Vessel::where('name', 'MV Retired')->first();         // archived
+        $truck = Truck::where('plate', 'KOLD 1X')->first();
+
+        $rows = fn ($active, $archived) => [
+            ['record' => $active, 'action' => 'archive', 'roles' => self::ADMIN],
+            ['record' => $active, 'action' => 'restore', 'roles' => self::NONE],
+            ['record' => $active, 'action' => 'delete', 'roles' => self::NONE],            // never on an active record
+            ['record' => $archived, 'action' => 'archive', 'roles' => self::NONE],
+            ['record' => $archived, 'action' => 'restore', 'roles' => self::ADMIN],
+            ['record' => $archived, 'action' => 'delete', 'roles' => self::ADMIN],
+        ];
+
+        $this->assertRowActions(ListVessels::class, self::MANAGERS, $rows($vessel, $retired), 'vessel archive', true, 'active');
+        $truck->update(['active' => false]);
         $this->assertRowActions(ListTrucks::class, self::MANAGERS, [
-            ['record' => Truck::where('plate', 'KOLD 1X')->first(), 'action' => 'toggle_active', 'roles' => self::MANAGERS],
-        ], 'truck switches');
+            ['record' => $truck, 'action' => 'restore', 'roles' => self::ADMIN],
+            ['record' => $truck, 'action' => 'delete', 'roles' => self::ADMIN],
+            ['record' => $truck, 'action' => 'archive', 'roles' => self::NONE],
+        ], 'truck archive', true, 'active');
     }
 
     // ---- pressing a hidden button anyway --------------------------------------------------------------------------------
@@ -348,7 +361,7 @@ class ActionMatrixTest extends TestCase
             'start a berthed voyage' => fn () => Livewire::test(RunDischarge::class, ['record' => $this->voyage('VOY-2611-04')->id])->call('start'),
             'complete the discharging voyage' => fn () => Livewire::test(RunDischarge::class, ['record' => $this->voyage('VOY-2611-03')->id])
                 ->call('finishPumping')->call('complete'),
-            'complete the loading order' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])->call('finishOrder')->call('completeOrder'),
+            'complete the loading order' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])->call('completeOrder'),
             'cancel the loading order' => $crafted(RunDelivery::class, ['record' => $loading->id], 'cancel_order'),
             'open a pending order' => fn () => Livewire::test(RunDelivery::class, ['record' => $this->order('ORD-1004')->id])->call('openLoading'),
             'gate in a truck' => fn () => Livewire::test(RunDelivery::class, ['record' => $loading->id])
@@ -368,8 +381,10 @@ class ActionMatrixTest extends TestCase
         // An operator tries a manager's job: deciding a correction (they cannot even open the queue).
         $this->assertNothingChanges(Role::Operator, fn () => Livewire::test(ListCorrectionRequests::class)
             ->call('mountTableAction', 'approve', $pending->id)->call('callMountedTableAction'), 'approve a correction');
-        $this->assertNothingChanges(Role::Operator, fn () => Livewire::test(ListVessels::class)
-            ->call('mountTableAction', 'toggle_active', Vessel::first()->id)->call('callMountedTableAction'), 'switch a vessel off');
+        foreach ([Role::Operator, Role::Supervisor] as $role) {
+            $this->assertNothingChanges($role, fn () => Livewire::test(ListVessels::class)
+                ->call('mountTableAction', 'archive', Vessel::first()->id)->call('callMountedTableAction'), 'archive a vessel');
+        }
         $this->assertNothingChanges(Role::Auditor, fn () => Livewire::test(ListTanks::class)
             ->call('mountTableAction', 'edit', Tank::first()->id), 'edit a tank');
     }

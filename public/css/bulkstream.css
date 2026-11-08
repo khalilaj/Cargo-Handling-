@@ -236,3 +236,17 @@ html.dark .bs-finish { border-color: #f0efea; background: rgba(240,239,234,.08);
 html.dark .bs-journey-dot { background: #6f95a3; border-color: #6f95a3; color: #071215; }
 html.dark .bs-journey-link, html.dark .bs-journey-title { color: #b6c3c7; }
 html.dark .bs-now { border-color: #f0efea; background: rgba(240,239,234,.08); }
+
+/* Tabs inside a wizard step (loading and weighing out are separate tabs) */
+.bs-tabs { display: flex; gap: .25rem; border-bottom: 2px solid var(--bs-line, #d9d6cc); margin: .5rem 0 1rem; }
+.bs-tab { font-family: var(--bs-heading); font-weight: 600; font-size: .95rem; padding: .6rem 1rem; min-height: 44px; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; color: var(--bs-steel, #5a6b70); cursor: pointer; }
+.bs-tab:hover { color: var(--bs-ink, #153037); }
+.bs-tab:focus-visible { outline: 2px solid var(--bs-ink, #153037); outline-offset: 2px; }
+.bs-tab.is-active { color: var(--bs-ink, #153037); border-bottom-color: var(--bs-ink, #153037); }
+html.dark .bs-tab.is-active { color: #f0efea; border-bottom-color: #f0efea; }
+
+/* Quiet way to close a part-loaded order */
+.bs-short-close { font-size: .85rem; color: var(--bs-steel, #5a6b70); margin: .25rem 0 1rem; }
+.bs-link-btn { background: none; border: 0; padding: 0 .15rem; font: inherit; font-weight: 600; text-decoration: underline; color: var(--bs-ink, #153037); cursor: pointer; }
+.bs-link-btn:disabled { opacity: .5; cursor: not-allowed; }
+html.dark .bs-link-btn { color: #f0efea; }

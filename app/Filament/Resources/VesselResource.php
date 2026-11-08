@@ -88,8 +88,8 @@ class VesselResource extends Resource
                 Tables\Columns\TextColumn::make('where')->label('Right now')->state(fn (Vessel $record) => self::whereIs($record)),
                 Tables\Columns\IconColumn::make('active')->boolean(),
             ])
-            ->filters([Tables\Filters\TernaryFilter::make('active')])
-            ->recordActions([ViewAction::make(), EditAction::make(), RegisterActions::toggleActive()]);
+            ->filters([RegisterActions::statusFilter()])
+            ->recordActions([ViewAction::make(), EditAction::make(), ...RegisterActions::archiveActions()]);
     }
 
     public static function getRelations(): array

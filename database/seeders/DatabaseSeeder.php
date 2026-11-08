@@ -51,6 +51,13 @@ class DatabaseSeeder extends Seeder
             $user->save();
         }
 
+        // The live demo has its own yard (three tanks, ships in port, trucks on site); the base set below is for the tests.
+        if (config('demo.extra')) {
+            $this->call(DemoYardSeeder::class);
+
+            return;
+        }
+
         foreach ([
             ['CPO-01', 'Crude Palm Oil 1', Commodity::CPO, 5_000_000],
             ['CPO-02', 'Crude Palm Oil 2', Commodity::CPO, 5_000_000],
@@ -69,10 +76,6 @@ class DatabaseSeeder extends Seeder
         $this->linkOperationsToRegisters();
         $this->seedTruckVisits();
         $this->seedCorrection();
-
-        if (config('demo.extra')) {
-            $this->call(ExtraDemoSeeder::class);
-        }
     }
 
     private function seedLedger(): void

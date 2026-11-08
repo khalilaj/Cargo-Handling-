@@ -183,7 +183,7 @@ class TruckVisitUiTest extends TestCase
         $this->login(Role::Operator);
         $order = DeliveryOrder::where('order_ref', 'ORD-1003')->first();                      // loading; two trucks on site, one load booked
 
-        Livewire::test(RunDelivery::class, ['record' => $order->id])->call('finishOrder')->call('completeOrder')->assertNotified('Not done');
+        Livewire::test(RunDelivery::class, ['record' => $order->id])->call('completeOrder')->assertNotified('Not done');
 
         $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
     }

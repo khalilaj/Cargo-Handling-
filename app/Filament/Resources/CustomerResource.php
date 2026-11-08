@@ -68,8 +68,8 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('orders_count')->label('Orders')->numeric(),
                 Tables\Columns\IconColumn::make('active')->boolean(),
             ])
-            ->filters([Tables\Filters\TernaryFilter::make('active')])
-            ->recordActions([ViewAction::make(), EditAction::make(), RegisterActions::toggleActive()]);
+            ->filters([RegisterActions::statusFilter()])
+            ->recordActions([ViewAction::make(), EditAction::make(), ...RegisterActions::archiveActions()]);
     }
 
     public static function getRelations(): array

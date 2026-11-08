@@ -64,8 +64,8 @@ class TransporterResource extends Resource
                 Tables\Columns\TextColumn::make('drivers_count')->label('Drivers')->numeric(),
                 Tables\Columns\IconColumn::make('active')->boolean(),
             ])
-            ->filters([Tables\Filters\TernaryFilter::make('active')])
-            ->recordActions([ViewAction::make(), EditAction::make(), RegisterActions::toggleActive()]);
+            ->filters([RegisterActions::statusFilter()])
+            ->recordActions([ViewAction::make(), EditAction::make(), ...RegisterActions::archiveActions()]);
     }
 
     public static function getRelations(): array
