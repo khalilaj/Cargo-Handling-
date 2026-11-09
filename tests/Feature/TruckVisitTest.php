@@ -227,7 +227,7 @@ class TruckVisitTest extends TestCase
         }
 
         $this->flow->gateOut($this->flow->weighOut($v, 19_000));
-        $this->assertSame(OrderStatus::Completed, app(AdvanceOrderStatus::class)($this->order->fresh(), OrderStatus::Completed)->status);
+        $this->assertSame(OrderStatus::Completed, app(AdvanceOrderStatus::class)($this->order->fresh(), OrderStatus::Completed, mayCloseShort: true)->status);
     }
 
     // ---- the state machine ----------------------------------------------------------------------------------

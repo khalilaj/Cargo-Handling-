@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\DB;
 /** Moves a delivery order along its lifecycle; every transition is validated. */
 class AdvanceOrderStatus
 {
-    public function __invoke(DeliveryOrder $order, OrderStatus $to): DeliveryOrder
+    /** @param  bool  $mayCloseShort  whether the actor may complete an order with less loaded than was ordered (supervisor/admin) */
+    public function __invoke(DeliveryOrder $order, OrderStatus $to, bool $mayCloseShort = false): DeliveryOrder
     {
-        return DB::transaction(function () use ($order, $to) {
+        return DB::transaction(function () use ($order, $to, $mayCloseShort) {
             $o = DeliveryOrder::query()->lockForUpdate()->findOrFail($order->id);
 
             if (! $o->status->canTransitionTo($to)) {
@@ -41,6 +42,12 @@ class AdvanceOrderStatus
             if ($to === OrderStatus::Cancelled && $hasLoads) {
                 throw new OperationIncompleteException(
                     "{$o->order_ref} has already loaded cargo. Complete it instead of cancelling."
+                );
+            }
+
+            if ($to === OrderStatus::Completed && ! $mayCloseShort && $o->remainingKg() > 0) {
+                throw new OperationIncompleteException(
+                    'Only a supervisor or an admin can close an order before everything ordered is loaded.'
                 );
             }
 

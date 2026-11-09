@@ -369,13 +369,7 @@ class RunDelivery extends Page
 
     public function completeOrder(): void
     {
-        if ($this->canOperate() && $this->record->remainingKg() > 0 && ! $this->canCloseShort()) {
-            Notification::make()->title('Not done')->body('Only a supervisor or an admin can close an order before everything ordered is loaded.')->danger()->persistent()->send();
-
-            return;
-        }
-
-        $this->act(fn () => app(AdvanceOrderStatus::class)($this->record, OrderStatus::Completed), 'Order completed');
+        $this->act(fn () => app(AdvanceOrderStatus::class)($this->record, OrderStatus::Completed, $this->canCloseShort()), 'Order completed');
 
         if ($this->record->status === OrderStatus::Completed) {
             $this->step = '';
