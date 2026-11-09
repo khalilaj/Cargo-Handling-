@@ -88,6 +88,12 @@ class RunDelivery extends Page
         return auth()->user()?->role->canOperate() ?? false;
     }
 
+    /** Closing an order with less than was ordered is a call for a supervisor or an admin, not for the bay. */
+    public function canCloseShort(): bool
+    {
+        return auth()->user()?->role->canApprove() ?? false;
+    }
+
     public function panel(): string
     {
         return match ($this->record->status) {
@@ -137,6 +143,7 @@ class RunDelivery extends Page
             'flow' => WorkflowSteps::for($o),
             'panel' => $this->panel(),
             'canOperate' => $this->canOperate(),
+            'canCloseShort' => $this->canCloseShort(),
             'ordered' => $o->ordered_kg,
             'delivered' => $o->deliveredKg(),
             'remaining' => $o->remainingKg(),
@@ -362,6 +369,12 @@ class RunDelivery extends Page
 
     public function completeOrder(): void
     {
+        if ($this->canOperate() && $this->record->remainingKg() > 0 && ! $this->canCloseShort()) {
+            Notification::make()->title('Not done')->body('Only a supervisor or an admin can close an order before everything ordered is loaded.')->danger()->persistent()->send();
+
+            return;
+        }
+
         $this->act(fn () => app(AdvanceOrderStatus::class)($this->record, OrderStatus::Completed), 'Order completed');
 
         if ($this->record->status === OrderStatus::Completed) {

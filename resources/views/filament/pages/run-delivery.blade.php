@@ -50,7 +50,7 @@
                     </div>
                 @else
                     <p class="bs-panel-lead">Take each truck through the gate, the weighbridge and the loading bay. When one has left, gate in the next.</p>
-                    @if ($delivered > 0 && $onSite->isEmpty())
+                    @if ($delivered > 0 && $onSite->isEmpty() && $canCloseShort)
                         {{-- Part-loaded and nobody at the gate: the order can still be closed, but quietly and after a question. --}}
                         <p class="bs-short-close">{{ number_format($delivered) }} of {{ number_format($ordered) }} kg loaded so far. Customer took less?
                             <button type="button" class="bs-link-btn" @disabled($readOnly) wire:click="completeOrder" wire:confirm="Close this order with {{ number_format($delivered) }} of {{ number_format($ordered) }} kg loaded?" wire:loading.attr="disabled" wire:target="completeOrder">Close the order short</button></p>

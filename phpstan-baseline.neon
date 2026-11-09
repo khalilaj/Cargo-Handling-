@@ -1,0 +1,1327 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Cannot call method isInbound\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Domain/Cargo/Services/TankLedger.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Cargo/Services/TankLedger.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:each\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: mixed, Closure\(App\\Models\\CargoMovement\)\: void given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Cargo/Services/TankLedger.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/ApproveCorrection.php
+
+		-
+			message: '#^Cannot call method addSecond\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/ApproveCorrection.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/ApproveCorrection.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/ApproveCorrection.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/RejectCorrection.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/RejectCorrection.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/RejectCorrection.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/RequestCorrection.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Corrections/Actions/RequestCorrection.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Truck\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$capacity_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tare_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Property App\\Models\\TruckVisit\:\:\$status \(string\) does not accept App\\Domain\\Fleet\\Enums\\VisitStatus\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Property App\\Models\\TruckVisit\:\:\$warnings \(string\|null\) does not accept list\<mixed\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Fleet/Actions/TruckVisitWorkflow.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Truck\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domain/Fleet/Services/ComplianceChecker.php
+
+		-
+			message: '#^Method App\\Domain\\Fleet\\Services\\ComplianceChecker\:\:documentsFor\(\) should return list\<array\{item\: string, status\: App\\Domain\\Fleet\\Enums\\DocumentStatus, expiry\: Carbon\\CarbonInterface\|null\}\> but returns array\{0\: array\{status\: App\\Domain\\Fleet\\Enums\\DocumentStatus, item\: non\-falsy\-string, expiry\: string\|null\}, 1\: array\{status\: App\\Domain\\Fleet\\Enums\\DocumentStatus, item\: non\-falsy\-string, expiry\: string\|null\}, 2\?\: array\{status\: App\\Domain\\Fleet\\Enums\\DocumentStatus, item\: non\-falsy\-string, expiry\: string\|null\}\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Domain/Fleet/Services/ComplianceChecker.php
+
+		-
+			message: '#^Parameter \#1 \$expiry of static method App\\Domain\\Fleet\\Services\\ComplianceChecker\:\:statusOf\(\) expects Carbon\\CarbonInterface\|null, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Fleet/Services/ComplianceChecker.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Property App\\Models\\VesselDischarge\:\:\$status \(string\) does not accept App\\Domain\\Operations\\Enums\\DischargeStatus\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceDischargeStatus.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ref\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceOrderStatus.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$truck\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceOrderStatus.php
+
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceOrderStatus.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceOrderStatus.php
+
+		-
+			message: '#^Property App\\Models\\DeliveryOrder\:\:\$status \(string\) does not accept App\\Domain\\Operations\\Enums\\OrderStatus\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Operations/Actions/AdvanceOrderStatus.php
+
+		-
+			message: '#^Cannot call method isActive\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/RecordDischargeIntoTank.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/RecordDischargeIntoTank.php
+
+		-
+			message: '#^Parameter \#7 \$commodity of method App\\Domain\\Cargo\\Services\\TankLedger\:\:record\(\) expects App\\Domain\\Cargo\\Enums\\Commodity\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Operations/Actions/RecordDischargeIntoTank.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$capacity_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Actions/RecordTruckLoad.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domain/Operations/Actions/RecordTruckLoad.php
+
+		-
+			message: '#^Cannot call method isActive\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Actions/RecordTruckLoad.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Domain/Operations/Actions/RecordTruckLoad.php
+
+		-
+			message: '#^Parameter \#7 \$commodity of method App\\Domain\\Cargo\\Services\\TankLedger\:\:record\(\) expects App\\Domain\\Cargo\\Enums\\Commodity\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Operations/Actions/RecordTruckLoad.php
+
+		-
+			message: '#^PHPDoc tag @var with type Illuminate\\Database\\Eloquent\\Model is not subtype of native type string\.$#'
+			identifier: varTag.nativeType
+			count: 1
+			path: app/Domain/Operations/Services/CodeGenerator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$commodity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Services/InventoryHistory.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$occurred_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Operations/Services/InventoryHistory.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:delta\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Domain/Operations/Services/InventoryHistory.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Operations/Services/InventoryHistory.php
+
+		-
+			message: '#^Cannot call method lte\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Services/InventoryHistory.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Cannot call method diffForHumans\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Cannot call method lt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_slice expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domain/Operations/Services/OperationalAlerts.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Reporting/DeliveryFulfilmentReport.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Reporting/DeliveryFulfilmentReport.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\DeliveryOrder\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Domain/Reporting/DeliveryFulfilmentReport.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Reporting/ReportCharts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$commodity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domain/Reporting/StockPositionReport.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Reporting/StockPositionReport.php
+
+		-
+			message: '#^Cannot call method gte\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Reporting/StockPositionReport.php
+
+		-
+			message: '#^Cannot call method lt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Reporting/StockPositionReport.php
+
+		-
+			message: '#^Cannot call method lte\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Reporting/StockPositionReport.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Domain/Reporting/VesselReconciliationReport.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Domain/Reporting/VesselReconciliationReport.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\VesselDischarge\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Domain/Reporting/VesselReconciliationReport.php
+
+		-
+			message: '#^Cannot call method canViewReports\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Pages/Reports.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/BerthResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$capacity_kg\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 7
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$current_volume_kg\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$customer\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$net_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_ref\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ref\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$truck\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$vessel_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$voyage_ref\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Cannot call method isInbound\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Parameter \#1 \$m of static method App\\Filament\\Resources\\CargoMovementResource\:\:movementUrl\(\) expects App\\Models\\CargoMovement, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Parameter \#1 \$m of static method App\\Filament\\Resources\\CargoMovementResource\:\:movementUrl\(\) expects App\\Models\\CargoMovement, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Parameter \#1 \$m of static method App\\Filament\\Resources\\CargoMovementResource\:\:when\(\) expects App\\Models\\CargoMovement, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Parameter \#1 \$m of static method App\\Filament\\Resources\\CargoMovementResource\:\:when\(\) expects App\\Models\\CargoMovement, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method App\\Support\\KenyaTime\:\:of\(\) expects Carbon\\CarbonInterface, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:correctionColor\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:correctionState\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:inboundSteps\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:kg\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 6
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:movementUrl\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:outboundSteps\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:reversalStory\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:tonnes\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 6
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:visitPlace\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\CargoMovementResource\:\:when\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 5
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>customer" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>order_ref" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>plate" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>voyage_ref" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CargoMovementResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$net_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CorrectionRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$reference\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CorrectionRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tank\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CorrectionRequestResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:auditLabel\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CorrectionRequestResource.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/CorrectionRequestResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:withTotals\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\DeliveryOrderResource\\Pages\\RunDelivery\:\:\$gateInForm\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\DeliveryOrderResource\\Pages\\RunDelivery\:\:\$loadForm\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\DeliveryOrderResource\\Pages\\RunDelivery\:\:\$weighInForm\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\DeliveryOrderResource\\Pages\\RunDelivery\:\:\$weighOutForm\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Truck\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$capacity_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tare_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot access property \$commodity on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot access property \$order_ref on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot access property \$ordered_kg on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot access property \$status on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method deliveredKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method progressPercent\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method remainingKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method visits\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Parameter \#1 \$order of callable App\\Domain\\Operations\\Actions\\AdvanceOrderStatus expects App\\Models\\DeliveryOrder, Illuminate\\Database\\Eloquent\\Model\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Parameter \#1 \$order of callable App\\Domain\\Operations\\Actions\\RecordTruckLoad expects App\\Models\\DeliveryOrder, Illuminate\\Database\\Eloquent\\Model\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Domain\\Fleet\\Actions\\TruckVisitWorkflow\:\:gateIn\(\) expects App\\Models\\DeliveryOrder, Illuminate\\Database\\Eloquent\\Model\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Parameter \#2 \$array of function implode expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/DriverResource.php
+
+		-
+			message: '#^Parameter \#1 \$expiry of static method App\\Domain\\Fleet\\Services\\ComplianceChecker\:\:statusOf\(\) expects Carbon\\CarbonInterface\|null, string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Filament/Resources/DriverResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TankResource/Widgets/TankBalanceChart.php
+
+		-
+			message: '#^Parameter \#1 \$tank of method App\\Domain\\Operations\\Services\\InventoryHistory\:\:forTank\(\) expects App\\Models\\Tank, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/TankResource/Widgets/TankBalanceChart.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ref\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TruckResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/TruckResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$delivery_order_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TruckVisitResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TruckVisitResource.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/TruckVisitResource/Pages/ListTruckVisits.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$delivery_order_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TruckVisitResource/Pages/ViewTruckVisit.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TruckVisitResource/Pages/ViewTruckVisit.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\VesselDischarge\:\:\$received_loss_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:withTotals\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\VesselDischargeResource\\Pages\\RunDischarge\:\:\$berthForm\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\VesselDischargeResource\\Pages\\RunDischarge\:\:\$completeForm\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Resources\\VesselDischargeResource\\Pages\\RunDischarge\:\:\$pumpForm\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot access property \$berth_id on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot access property \$commodity on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot access property \$id on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot access property \$status on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot access property \$voyage_ref on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method canApprove\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method isFullyDischarged\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method movements\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method progressPercent\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method receivedGrossKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method receivedNetKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method remainingKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Cannot call method transitLossKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Parameter \#1 \$discharge of callable App\\Domain\\Operations\\Actions\\AdvanceDischargeStatus expects App\\Models\\VesselDischarge, Illuminate\\Database\\Eloquent\\Model\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Parameter \#1 \$discharge of callable App\\Domain\\Operations\\Actions\\RecordDischargeIntoTank expects App\\Models\\VesselDischarge, Illuminate\\Database\\Eloquent\\Model\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/VesselDischargeResource/Pages/RunDischarge.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/VesselResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\:\:withTotals\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/VesselResource.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Resources/VesselResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/VesselResource.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Support/ContinueAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Truck\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Support/RegisterActions.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$active\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Filament/Support/RegisterActions.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$capacity_kg\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Support/WizardFields.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:remainingKg\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Support/WizardFields.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 3
+			path: app/Filament/Support/WorkflowSteps.php
+
+		-
+			message: '#^Parameter \#2 \$current of static method App\\Filament\\Support\\WorkflowSteps\:\:build\(\) expects BackedEnum, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Filament/Support/WorkflowSteps.php
+
+		-
+			message: '#^Cannot call method canViewAnalytics\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Widgets/InventoryTrend.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_ref\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RecentMovements.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$voyage_ref\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RecentMovements.php
+
+		-
+			message: '#^Cannot call method canViewAnalytics\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Filament/Widgets/RecentMovements.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>order_ref" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RecentMovements.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>voyage_ref" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RecentMovements.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$customer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/TrucksOnSite.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$imo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/VesselsInPort.php
+
+		-
+			message: '#^Cannot call method canViewReports\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/ReportPdfController.php
+
+		-
+			message: '#^Cannot call method canSeeAlerts\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/AlertsBell.php
+
+		-
+			message: '#^Parameter \#1 \$role of method App\\Domain\\Operations\\Services\\OperationalAlerts\:\:forRole\(\) expects App\\Domain\\Access\\Role, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Livewire/AlertsBell.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/AuditLog.php
+
+		-
+			message: '#^Method App\\Models\\Berth\:\:occupant\(\) should return App\\Models\\VesselDischarge\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Berth.php
+
+		-
+			message: '#^Cannot call method isInbound\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/CargoMovement.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/DeliveryOrder.php
+
+		-
+			message: '#^Parameter \#1 \$commodity of method App\\Domain\\Operations\\Services\\CodeGenerator\:\:tank\(\) expects App\\Domain\\Cargo\\Enums\\Commodity, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Tank.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Truck\:\:\$plate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Truck.php
+
+		-
+			message: '#^Method App\\Models\\Vessel\:\:currentVoyage\(\) should return App\\Models\\VesselDischarge\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Vessel.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/VesselDischarge.php
+
+		-
+			message: '#^Cannot call method canViewAudit\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/AuditLogPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/BerthPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/BerthPolicy.php
+
+		-
+			message: '#^Cannot call method canViewCorrections\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/CorrectionRequestPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/CustomerPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/CustomerPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/DeliveryOrderPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/DriverPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/DriverPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TankPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TransporterPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TransporterPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TruckPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TruckPolicy.php
+
+		-
+			message: '#^Cannot call method canOperate\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Policies/TruckVisitPolicy.php
+
+		-
+			message: '#^Cannot call method canManageUsers\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/VesselDischargePolicy.php
+
+		-
+			message: '#^Cannot call method canManageMasterData\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/VesselPolicy.php
+
+		-
+			message: '#^Cannot call method canViewRegisters\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/VesselPolicy.php
+
+		-
+			message: '#^Argument of an invalid type Illuminate\\Routing\\RouteCollectionInterface supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: database/seeders/DatabaseSeeder.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$role \(string\) does not accept App\\Domain\\Access\\Role\:\:Admin\|App\\Domain\\Access\\Role\:\:Auditor\|App\\Domain\\Access\\Role\:\:Operator\|App\\Domain\\Access\\Role\:\:Supervisor\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: database/seeders/DatabaseSeeder.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between ''9215533''\|''9288901''\|''9301122''\|''9356123''\|''9402211''\|''9411236'' and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: database/seeders/DemoYardSeeder.php

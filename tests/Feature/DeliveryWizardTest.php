@@ -102,11 +102,45 @@ class DeliveryWizardTest extends TestCase
             ->set('loadData.occurred_at', now()->toDateTimeString())->set('loadData.idempotency_key', 'dw-2')->call('load')->assertNotified('Loaded');
         $w->set('weighOutData.kg', 33_500)->call('weighOut')->call('gateOut');
 
-        $w->assertDontSee('Complete the order')->assertSee('Close the order short');       // 30,000 of 200,000 kg: not all loaded, nobody at the gate
+        $w->assertDontSee('Complete the order')->assertDontSee('Close the order short');    // 30,000 of 200,000 kg: not all loaded; an operator is not offered the short close
+        $w->call('completeOrder')->assertNotified('Not done');                                       // and cannot force it either
+        $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
+        $this->loginAs(Role::Supervisor);
+        $this->wizard($order)->assertSee('Close the order short');                              // a supervisor is
+        $this->loginAs(Role::Operator);
         $order->update(['ordered_kg' => $order->deliveredKg()]);                            // everything ordered is now loaded
         $w->call('$refresh')->assertSee('Complete the order')->assertDontSee('Close the order short')->call('completeOrder')->assertNotified('Order completed');
         $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
         $w->assertSee('Order complete');
+    }
+
+    public function test_a_supervisor_can_close_a_part_loaded_order_and_an_operator_cannot(): void
+    {
+        $order = $this->order('ORD-1003');
+        TruckVisit::where('delivery_order_id', $order->id)->whereNotIn('status', [VisitStatus::Departed->value, VisitStatus::Cancelled->value])->update(['status' => VisitStatus::Departed->value, 'active_truck_id' => null]);
+        $this->assertGreaterThan(0, $order->deliveredKg());
+        $this->assertGreaterThan(0, $order->remainingKg());
+
+        $this->wizard($order)->call('completeOrder')->assertNotified('Not done');
+        $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
+
+        $this->loginAs(Role::Supervisor);
+        $this->wizard($order)->call('completeOrder')->assertNotified('Order completed');
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
+    }
+
+    public function test_an_auditor_cannot_complete_and_an_admin_can_close_short(): void
+    {
+        $order = $this->order('ORD-1003');
+        TruckVisit::where('delivery_order_id', $order->id)->whereNotIn('status', [VisitStatus::Departed->value, VisitStatus::Cancelled->value])->update(['status' => VisitStatus::Departed->value, 'active_truck_id' => null]);
+
+        $this->loginAs(Role::Auditor);
+        $this->wizard($order)->call('completeOrder')->assertForbidden();
+        $this->assertSame(OrderStatus::Loading, $order->fresh()->status);
+
+        $this->loginAs(Role::Admin);
+        $this->wizard($order)->call('completeOrder')->assertNotified('Order completed');
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
     }
 
     public function test_an_order_with_trucks_on_site_cannot_be_completed_and_says_which(): void
