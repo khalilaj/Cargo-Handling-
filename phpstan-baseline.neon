@@ -307,12 +307,6 @@ parameters:
 			path: app/Domain/Operations/Services/OperationalAlerts.php
 
 		-
-			message: '#^Cannot call method isPast\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Domain/Operations/Services/OperationalAlerts.php
-
-		-
 			message: '#^Cannot call method label\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -765,7 +759,7 @@ parameters:
 		-
 			message: '#^Cannot call method remainingKg\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
 			identifier: method.nonObject
-			count: 4
+			count: 3
 			path: app/Filament/Resources/DeliveryOrderResource/Pages/RunDelivery.php
 
 		-

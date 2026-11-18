@@ -42,7 +42,7 @@
 
             @case ('pump')
                 <h2>Pump into a tank</h2>
-                <p class="bs-panel-lead">Choose the tank and the quantity. The 0.5% transit loss is taken off for you. Repeat for each tank you fill.</p>
+                <p class="bs-panel-lead">Choose the tank and the quantity. The {{ \App\Domain\Cargo\Services\TransitLossCalculator::percentLabel() }} transit loss is taken off for you. Repeat for each tank you fill.</p>
                 <form wire:submit="pump">
                     {{ $this->pumpForm }}
                     <div class="bs-panel-actions">
