@@ -27,10 +27,15 @@ class Truck extends Model
         ];
     }
 
-    /** "kda  214x" and "KDA 214X" are the same truck. */
+    /** "kda  214x" and "KDA 214X" are the same truck. One rule, used by the model and the form. */
+    public static function normalisePlate(?string $plate): string
+    {
+        return strtoupper(trim((string) preg_replace('/\s+/', ' ', (string) $plate)));
+    }
+
     protected function plate(): Attribute
     {
-        return Attribute::set(fn (string $v) => strtoupper(trim((string) preg_replace('/\s+/', ' ', $v))));
+        return Attribute::set(fn (string $v) => self::normalisePlate($v));
     }
 
     public function auditLabel(): string

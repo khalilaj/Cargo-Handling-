@@ -36,8 +36,10 @@ class TruckResource extends Resource
     {
         return $schema->components([
             Forms\Components\TextInput::make('plate')->label('Number plate')->required()->maxLength(20)
-                ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule)
-                ->dehydrateStateUsing(fn ($state) => strtoupper(trim((string) preg_replace('/\s+/', ' ', (string) $state))))
+                ->unique(ignoreRecord: true)
+                // Normalise before the unique check too, so "kda  214x" is caught as a duplicate of "KDA 214X".
+                ->mutateStateForValidationUsing(fn ($state) => Truck::normalisePlate($state))
+                ->dehydrateStateUsing(fn ($state) => Truck::normalisePlate($state))
                 ->helperText('"kda  214x" and "KDA 214X" are the same truck.'),
             Forms\Components\Select::make('transporter_id')->label('Transporter')
                 ->options(fn () => Transporter::where('active', true)->orderBy('name')->pluck('name', 'id'))->searchable(),

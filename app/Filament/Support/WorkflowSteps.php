@@ -2,6 +2,7 @@
 
 namespace App\Filament\Support;
 
+use App\Domain\Cargo\Services\TransitLossCalculator;
 use App\Domain\Fleet\Enums\VisitStatus;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Domain\Operations\Enums\OrderStatus;
@@ -62,7 +63,7 @@ class WorkflowSteps
             DischargeStatus::Berthed => 'Next: press "Start discharge" when pumping begins.',
             DischargeStatus::Discharging => $d->isFullyDischarged()
                 ? 'Next: the cargo is in. Press "Finish pumping" and then "Complete voyage".'
-                : 'Next: press "Pump into tank" for each tank you fill. The 0.5% transit loss is taken off automatically. When the whole bill of lading is in, press "Finish pumping" and then "Complete voyage".',
+                : 'Next: press "Pump into tank" for each tank you fill. The '.TransitLossCalculator::percentLabel().' transit loss is taken off automatically. When the whole bill of lading is in, press "Finish pumping" and then "Complete voyage".',
             DischargeStatus::Completed => 'Done. Everything pumped is in the tanks, and the transit loss is recorded below.',
             DischargeStatus::Cancelled => 'This voyage was cancelled. Nothing more can be done on it.',
         };

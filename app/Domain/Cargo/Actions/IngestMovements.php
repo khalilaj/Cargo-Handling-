@@ -27,7 +27,13 @@ class IngestMovements
         $results = [];
         foreach ($records as $r) {
             try {
-                $tank = Tank::where('code', $r['tank'])->firstOrFail();
+                // An unknown tank rejects this record only; the rest of the batch still applies.
+                $tank = Tank::where('code', $r['tank'])->first();
+                if ($tank === null) {
+                    $results[] = ['idempotency_key' => $r['idempotency_key'], 'status' => 'rejected', 'reason' => "Unknown tank {$r['tank']}."];
+
+                    continue;
+                }
                 $m = $this->ledger->record(
                     $tank->id,
                     MovementType::from($r['type']),

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Cargo\Enums\Commodity;
+use App\Domain\Cargo\Services\TransitLossCalculator;
 use App\Domain\Operations\Enums\DischargeStatus;
 use App\Filament\Resources\RelationManagers\MovementsRelationManager;
 use App\Filament\Resources\VesselDischargeResource\Pages;
@@ -104,7 +105,7 @@ class VesselDischargeResource extends Resource
                 Tables\Columns\TextColumn::make('received_gross_kg')->label('Received (kg)')->numeric()->default(0)->alignEnd(),
                 Tables\Columns\TextColumn::make('transit_loss')->visibleFrom('md')->label('Loss (kg)')->alignEnd()
                     ->state(fn (VesselDischarge $r) => number_format((int) $r->received_loss_kg))   // the list query already sums it
-                    ->tooltip('Transit loss: 0.5% of what was pumped, taken off automatically.'),
+                    ->tooltip('Transit loss: '.TransitLossCalculator::percentLabel().' of what was pumped, taken off automatically.'),
                 Tables\Columns\TextColumn::make('progress')->label('Progress')
                     ->state(fn (VesselDischarge $r) => $r->progressPercent().'%')->badge()
                     ->color(fn (VesselDischarge $r) => $r->progressPercent() >= 100 ? 'success' : 'gray'),
